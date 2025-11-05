@@ -1,0 +1,401 @@
+import React, { useState, useEffect } from "react";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Head } from "@inertiajs/react";
+import DataTable from "@/Components/DataTable";
+import { Inertia } from "@inertiajs/inertia";
+
+function calculateDuration(row) {
+  const { log_time, time_out, status } = row;
+  const start = new Date(log_time);
+  const end = status === "Complete" && time_out ? new Date(time_out) : new Date();
+  if (isNaN(start) || isNaN(end)) return "-";
+  const diffMs = end - start;
+  if (diffMs < 0) return "-";
+  const diffMinutes = Math.floor(diffMs / 60000);
+  if (diffMinutes > 0) return `${diffMinutes} min`;
+  const diffSeconds = Math.floor(diffMs / 1000);
+  return `${diffSeconds} secs`;
+}
+
+function getShiftBadge(row) {
+  let shift = row.shift || "";
+  let badgeClass = "badge bg-secondary";
+  if (!shift) {
+    const logDate = new Date(row.log_time);
+    if (!isNaN(logDate)) {
+      const hours = logDate.getHours();
+      const minutes = logDate.getMinutes();
+      const totalMinutes = hours * 60 + minutes;
+      if (totalMinutes >= 7 * 60 + 1 && totalMinutes <= 19 * 60) {
+        shift = "A-Shift";
+        badgeClass = "badge bg-primary";
+      } else {
+        shift = "C-Shift";
+        badgeClass = "badge bg-warning";
+      }
+    } else {
+      shift = "Unknown";
+      badgeClass = "badge bg-secondary";
+    }
+  } else {
+    if (shift === "A-Shift") badgeClass = "badge bg-primary";
+    else if (shift === "C-Shift") badgeClass = "badge bg-warning";
+  }
+  return <span className={badgeClass}>{shift}</span>;
+}
+
+function getStatusBadge(status) {
+  if (!status) return <span className="badge bg-secondary">Unknown</span>;
+  const lower = status.toLowerCase();
+  if (lower.startsWith("ongoing") || lower === "on going")
+    return <span className="badge bg-info">{status}</span>;
+  if (lower === "complete")
+    return <span className="badge bg-success">{status}</span>;
+  if (lower.startsWith("for engineer approval"))
+    return <span className="badge bg-primary">{status}</span>;
+  return <span className="badge bg-secondary">{status}</span>;
+}
+
+export default function Activity({
+  tableData,
+  tableFilters,
+  auth,
+  empData,
+  activityOptions,
+  machineOptions,
+}) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState(null);
+
+  const empId = empData?.emp_id || "";
+  const empName = empData?.emp_name || "";
+
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    emp_id: empId,
+    emp_name: empName,
+    shift: "",
+    my_activity: "",
+    machine: "",
+    note: "",
+  });
+
+  // ✅ Auto compute shift on mount
+  useEffect(() => {
+    const now = new Date();
+    const totalMinutes = now.getHours() * 60 + now.getMinutes();
+    const shift =
+      totalMinutes >= 7 * 60 + 1 && totalMinutes <= 19 * 60
+        ? "A-Shift"
+        : "C-Shift";
+    setForm((prev) => ({ ...prev, shift }));
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   console.log("Form submitted:", form);
+  //   setShowForm(false);
+  //   setForm({
+  //     emp_id: auth.user?.id || "",
+  //     emp_name: auth.user?.name || "",
+  //     shift: "",
+  //     my_activity: "",
+  //     machine: "",
+  //     note: "",
+  //   });
+  // };
+
+  const handleSubmit = (e) => {
+  e.preventDefault();
+
+  Inertia.post("/ongoing/add", form, {
+    onSuccess: () => {
+      console.log("Activity saved successfully!");
+
+      // reset form
+      setForm({
+        emp_id: auth.user?.id || "",
+        emp_name: auth.user?.name || "",
+        shift: "",
+        my_activity: "",
+        machine: "",
+        note: "",
+      });
+
+      setShowForm(false);
+    },
+    onError: (errors) => {
+      console.error("Error saving activity:", errors);
+    }
+  });
+};
+
+  const filteredData = tableData?.data || [];
+
+  // ✅ Check if current user has ongoing activity
+  const hasOngoing = filteredData.some(
+    (row) =>
+      row.emp_id === empId &&
+      (row.status?.toLowerCase() === "ongoing" || row.status?.toLowerCase() === "on going")
+  );
+
+const dataWithBadgesAndDuration = filteredData.map((row, index) => {
+  const enhancedRow = {
+    ...row,
+    i: index + 1,
+    duration: calculateDuration(row),
+    shift: getShiftBadge(row),
+    shiftText: row.shift || "",   // plain text for modal
+    status: getStatusBadge(row.status),
+    statusText: row.status || "Unknown", // plain text for modal
+  };
+
+  return {
+    ...enhancedRow,
+    viewDetails: (
+      <button
+        className="px-3 py-2 bg-gray-500 text-white rounded-md"
+        onClick={() => {
+          setSelectedActivity(enhancedRow); // ✅ now passing enhanced row
+          setModalOpen(true);
+        }}
+      >
+        <div className="flex items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="size-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+            />
+          </svg>
+          &nbsp;View
+        </div>
+      </button>
+    ),
+  };
+});
+
+
+
+  return (
+    <AuthenticatedLayout>
+      <Head title="My Ongoing Activities" />
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4">My Ongoing Activities</h1>
+
+        {/* ✅ Toggle Insert Form */}
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className={`px-4 py-2 rounded mb-4 ${
+            hasOngoing ? "bg-yellow-400 text-red-500 cursor-not-allowed" : "bg-blue-600 text-white"
+          }`}
+          disabled={hasOngoing}
+        >
+          {hasOngoing
+            ? "+ Log New Activity (Ongoing your Task/ Activity)"
+            : "+ Log New Activity"}
+        </button>
+
+
+
+        {showForm && (
+          <form
+            onSubmit={handleSubmit}
+            className="mb-6 grid gap-2 border p-4 rounded"
+          >
+            <input type="text" value="Ongoing" hidden />
+            <input
+              name="emp_id"
+              value={form.emp_id}
+              onChange={handleChange}
+              placeholder="Employee ID"
+              className="border p-2 text-gray-700 bg-gray-200"
+              readOnly
+            />
+            <input
+              name="emp_name"
+              value={form.emp_name}
+              onChange={handleChange}
+              placeholder="Employee Name"
+              className="border p-2 text-gray-700 bg-gray-200"
+              readOnly
+            />
+            {/* ✅ Auto selected shift */}
+            <select
+              name="shift"
+              value={form.shift}
+              onChange={handleChange}
+              className="border p-2 text-gray-700"
+              required
+            >
+              <option disabled value="">
+                Select Shift
+              </option>
+              <option value="A-Shift">A-Shift</option>
+              <option value="C-Shift">C-Shift</option>
+            </select>
+
+            <select
+              name="my_activity"
+              value={form.my_activity}
+              onChange={handleChange}
+              className="border p-2 text-gray-700"
+              required
+            >
+              <option disabled value="">
+                Select Activity
+              </option>
+              {activityOptions.map((activity, idx) => (
+                <option key={idx} value={activity}>
+                  {activity}
+                </option>
+              ))}
+            </select>
+
+            <select
+              name="machine"
+              value={form.machine}
+              onChange={handleChange}
+              className="border p-2 text-gray-700"
+              required
+            >
+              <option disabled value="">
+                Select Machine
+              </option>
+              <option value="N/A">N/A</option>
+              {machineOptions.map((machine_num, idx) => (
+                <option key={idx} value={machine_num}>
+                  {machine_num}
+                </option>
+              ))}
+            </select>
+
+            <input
+              name="log_time"
+              value={(() => {
+                const now = new Date();
+                const monthNames = [
+                  "Jan",
+                  "Feb",
+                  "Mar",
+                  "Apr",
+                  "May",
+                  "Jun",
+                  "Jul",
+                  "Aug",
+                  "Sep",
+                  "Oct",
+                  "Nov",
+                  "Dec",
+                ];
+                return `${monthNames[now.getMonth()]}/${String(
+                  now.getDate()
+                ).padStart(2, "0")}/${now.getFullYear()} ${String(
+                  now.getHours()
+                ).padStart(2, "0")}:${String(now.getMinutes()).padStart(
+                  2,
+                  "0"
+                )}:${String(now.getSeconds()).padStart(2, "0")}`;
+              })()}
+              onChange={handleChange}
+              placeholder="Log Time"
+               className="border p-2 text-gray-700 bg-gray-200"
+              readOnly
+            />
+
+            <textarea
+              name="note"
+              value={form.note}
+              onChange={handleChange}
+              placeholder="Note"
+              className="border py-10 text-gray-700"
+            />
+            <button
+              type="submit"
+              className="bg-green-600 text-white px-4 py-3 rounded flex items-center justify-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75h1.5m9 0h-9" />
+              </svg>
+              Save
+            </button>
+          </form>
+        )}
+
+        <DataTable
+          columns={[
+            { key: "emp_name", label: "Technician" },
+            { key: "shift", label: "Shift" },
+            { key: "my_activity", label: "Activity" },
+            { key: "machine", label: "Machine" },
+            { key: "log_time", label: "Date Log" },
+            // { key: "time_out", label: "Done Date" },
+            { key: "duration", label: "Time Duration" },
+            { key: "status", label: "Status" },
+            { key: "note", label: "Comment" },
+            { key: "viewDetails", label: "Details" },
+          ]}
+          data={dataWithBadgesAndDuration}
+          meta={tableData?.meta}
+          routeName={route("tech.ongoing")}
+          filters={tableFilters}
+          rowKey="id"
+          sortBy="id"
+          sortOrder="desc"
+        />
+
+         {/* Modal */}
+        {modalOpen && selectedActivity && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-55">
+            <div className="bg-gray-800 p-6 rounded shadow-lg w-1/4">
+              <h2 className="text-xl font-bold mb-4 text-gray-800">
+                <div className="flex items-center bg-gray-500 p-2 rounded text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-12">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                  </svg> &nbsp;
+                  Activity Details
+                </div>
+              </h2>
+              <p className="mb-2 text-white"><strong>Technician:</strong> {selectedActivity.emp_name}</p>
+              <p className="mb-2 text-white"><strong>Shift:</strong> {selectedActivity.shift}</p>
+              <p className="mb-2 text-white"><strong>Activity:</strong> {selectedActivity.my_activity}</p>
+              <p className="mb-2 text-white"><strong>Machine:</strong> {selectedActivity.machine}</p>
+              <p className="mb-2 text-white"><strong>Date Log:</strong> {selectedActivity.log_time}</p>
+              <p className="mb-2 text-white"><strong>Time Duration:</strong> {selectedActivity.duration}</p>
+              <p className="mb-2 text-white"><strong>Status:</strong> {selectedActivity.status}</p>
+              <p className="mb-2 text-white"><strong>Note:</strong> {selectedActivity.note || "-"}</p>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>&nbsp;
+                Close
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </AuthenticatedLayout>
+  );
+}

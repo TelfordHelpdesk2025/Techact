@@ -1,0 +1,147 @@
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Head, usePage, router } from "@inertiajs/react";
+import DataTable from "@/Components/DataTable";
+import Modal from "@/Components/Modal";
+
+import { useState } from "react";
+
+export default function Activity({ tableData, tableFilters, emp_data }) {
+    const [role, setRole] = useState(null);
+
+    function removeActivity(id) {
+        router.post(
+            route("removeActivity"),
+            { id },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    console.log("Activity removed");
+                },
+            }
+        );
+    }
+
+    function changeRole(id) {
+        role &&
+            router.patch(
+                route("changeActivityRole"),
+                { id, role },
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        console.log("Activity role changed");
+                    },
+                }
+            );
+    }
+
+    const tableModalClose = (close) => {
+        setRole(null);
+        close();
+    };
+
+    return (
+        <AuthenticatedLayout>
+            <Head title="Manage Activityistrators" />
+
+            <div className="flex items-center justify-between mb-4">
+                <h1 className="text-2xl font-bold">Activityistrators</h1>
+
+                {["superActivity", "Activity"].includes(
+                    emp_data?.emp_system_role
+                ) && (
+                    <button
+                        className="text-blue-600 border-blue-600 btn"
+                        onClick={() =>
+                            router.get(
+                                route("index_addActivity"),
+                                {},
+                                { preserveScroll: true }
+                            )
+                        }
+                    >
+                        Add New Activity
+                    </button>
+                )}
+            </div>
+
+            <DataTable
+                columns={[
+                    { key: "emp_id", label: "ID" },
+                    { key: "emp_name", label: "Employee Name" },
+                    { key: "shift", label: "Shift Type" },
+                    { key: "my_activity", label: "Activity" },
+                    { key: "log_time", label: "Time Log" },
+                    { key: "status", label: "Status" },
+                ]}
+                data={tableData.data}
+                meta={{
+                    from: tableData.from,
+                    to: tableData.to,
+                    total: tableData.total,
+                    links: tableData.links,
+                    currentPage: tableData.current_page,
+                    lastPage: tableData.last_page,
+                }}
+                routeName={route("Activity")}
+                filters={tableFilters}
+                rowKey="EMPLOYID"
+                // selectable={true}
+                // onSelectionChange={setSelectedRows}
+                // dateRangeSearch={true}
+                showExport={false}
+            >
+                {(row, close) => (
+                    <Modal
+                        id="RowModal"
+                        title={`Activity Details`}
+                        show={true}
+                        onClose={() => tableModalClose(close)}
+                        className="w-[300px]"
+                    >
+                        <p>
+                            <strong>ID:</strong> {row.emp_id}
+                        </p>
+                        <strong>Name:</strong> {row.emp_name}
+                        <p>
+                            <strong>Role:</strong> {row.emp_role}
+                        </p>
+                        {["superActivity", "Activity"].includes(
+                            emp_data?.emp_system_role
+                        ) && (
+                            <div>
+                                <select
+                                    defaultValue={row.emp_role}
+                                    onChange={(e) => setRole(e.target.value)}
+                                    className="mt-5 select"
+                                >
+                                    {/* <option value={null}></option> */}
+                                    <option value="superActivity">
+                                        SuperActivity
+                                    </option>
+                                    <option value="Activity">Activity</option>
+                                    <option value="moderator">Moderator</option>
+                                </select>
+
+                                <div className="flex justify-end gap-1 mt-5">
+                                    <button
+                                        className="text-blue-600 btn"
+                                        onClick={() => changeRole(row.emp_id)}
+                                    >
+                                        Update Role
+                                    </button>
+                                    <button
+                                        className="text-red-600 btn"
+                                        onClick={() => removeActivity(row.emp_id)}
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </Modal>
+                )}
+            </DataTable>
+        </AuthenticatedLayout>
+    );
+}
