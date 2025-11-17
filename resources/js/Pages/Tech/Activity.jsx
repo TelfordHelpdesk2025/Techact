@@ -40,34 +40,34 @@ function getShiftBadge(row) {
       const totalMinutes = hours * 60 + minutes;
       if (totalMinutes >= 7 * 60 + 1 && totalMinutes <= 19 * 60) {
         shift = "A-Shift";
-        badgeClass = "badge bg-primary text-black";
+        badgeClass = "badge bg-primary text-white";
       } else {
         shift = "C-Shift";
-        badgeClass = "badge bg-warning text-black";
+        badgeClass = "badge bg-warning text-white";
       }
     } else {
       shift = "Unknown";
-      badgeClass = "badge bg-secondary text-black";
+      badgeClass = "badge bg-secondary text-white";
     }
   } else {
-    if (shift === "A-Shift") badgeClass = "badge bg-primary  text-black";
-    else if (shift === "C-Shift") badgeClass = "badge bg-warning  text-black";
+    if (shift === "A-Shift") badgeClass = "badge bg-primary  text-white";
+    else if (shift === "C-Shift") badgeClass = "badge bg-warning  text-white";
   }
   return <span className={badgeClass}>{shift}</span>;
 }
 
 function getStatusBadge(status) {
-  if (!status) return <span className="badge bg-secondary text-black">Unknown</span>;
+  if (!status) return <span className="badge bg-secondary text-white">Unknown</span>;
   const lower = status.toLowerCase();
   if (lower.startsWith("ongoing") || lower === "on-going" || lower === "on going")
-    return <span className="badge bg-info text-black">{status}</span>;
+    return <span className="badge bg-info text-white">{status}</span>;
   if (lower === "complete")
-    return <span className="badge bg-success text-black">{status}</span>;
+    return <span className="badge bg-success text-white">{status}</span>;
   if (lower.startsWith("for engineer approval"))
-    return <span className="badge bg-primary text-black">{status}</span>;
-  if (lower === "reject")
-    return <span className="badge bg-red-600 text-bold text-black">{status}</span>;
-  return <span className="badge bg-secondary text-black">{status}</span>;
+    return <span className="badge bg-primary text-white">{status}</span>;
+  if (lower === "rejected")
+    return <span className="badge bg-red-600 text-bold text-white">{status}</span>;
+  return <span className="badge bg-secondary text-white">{status}</span>;
 }
 export default function Activity({ tableData, tableFilters }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -167,22 +167,39 @@ export default function Activity({ tableData, tableFilters }) {
 
       {/* Details List (left aligned) */}
       <div className="space-y-3 text-sm text-gray-200">
-        {[
-          ["Technician", selectedActivity.emp_name],
-          ["Shift", selectedActivity.shift],
-          ["Activity", selectedActivity.my_activity],
-          ["Machine", selectedActivity.machine],
-          ["Log Time", selectedActivity.log_time],
-          ["Time Out", selectedActivity.time_out || "-"],
-          ["Status", selectedActivity.status],
-          ["Note", selectedActivity.note || "-"],
-        ].map(([label, value], idx) => (
-          <div key={idx} className="border-b border-gray-700 pb-2">
-            <p className="text-gray-400 font-semibold">{label}:</p>
-            <p className="text-white ml-2">{value}</p>
-          </div>
-        ))}
-      </div>
+  {[
+    ["Technician", selectedActivity.emp_name],
+    ["Shift", selectedActivity.shift],
+    ["Activity", selectedActivity.my_activity],
+    ["Machine", selectedActivity.machine],
+    ["Log Time", selectedActivity.log_time],
+    ["Time Out", selectedActivity.time_out || "-"],
+    ["Status", selectedActivity.status],
+    ["Note", selectedActivity.note || "-"],
+    // Conditional Approver
+    ...(selectedActivity.approver_id
+      ? [
+          ["Approver", selectedActivity.approver_name],
+          ["Approved Date", selectedActivity.approve_date],
+          ["Remarks", selectedActivity.remarks],
+        ]
+      : []),
+    // Conditional Rejector
+    ...(selectedActivity.rejector_id
+      ? [
+          ["Rejector", selectedActivity.rejector_name],
+          ["Rejected Date", selectedActivity.rejected_date],
+          ["Remarks", selectedActivity.remarks],
+        ]
+      : []),
+  ].map(([label, value], idx) => (
+    <div key={idx} className="border-b border-gray-700 pb-2">
+      <p className="text-gray-400 font-semibold">{label}:</p>
+      <p className="text-white ml-2">{value}</p>
+    </div>
+  ))}
+</div>
+
 
       {/* Close Button */}
       <div className="mt-6 text-right">

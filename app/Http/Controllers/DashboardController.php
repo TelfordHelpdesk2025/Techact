@@ -14,6 +14,13 @@ class DashboardController extends Controller
         $empData = session('emp_data');
         $empName = $empData['emp_name'] ?? null;
 
+        // ✅ Use selected date if provided, else today
+        $selectedDate = $request->input('date');
+        $date = $selectedDate ? Carbon::parse($selectedDate) : Carbon::now();
+
+        $dayStart = $date->copy()->startOfDay()->format('Y-m-d H:i:s');
+        $dayEnd   = $date->copy()->endOfDay()->format('Y-m-d H:i:s');
+
         // 🔹 Total counts technician
         $totalActivities = DB::connection('server26')->table('my_activity_list')
             ->where('emp_name', $empName)
@@ -26,90 +33,54 @@ class DashboardController extends Controller
 
         $ongoingActivities = DB::connection('server26')->table('my_activity_list')
             ->where('emp_name', $empName)
-            ->where('status', 'ongoing', 'on going')
+            ->whereIn('status', ['ongoing', 'on going'])
             ->count();
 
         // 🔹 Total counts admin
-        $totalActivitiesAdmin = DB::connection('server26')->table('my_activity_list')
-            ->count();
+        $totalActivitiesAdmin = DB::connection('server26')->table('my_activity_list')->count();
+        $completedActivitiesAdmin = DB::connection('server26')->table('my_activity_list')->where('status', 'complete')->count();
+        $ongoingActivitiesAdmin = DB::connection('server26')->table('my_activity_list')->whereIn('status', ['ongoing', 'on going'])->count();
 
-        $completedActivitiesAdmin = DB::connection('server26')->table('my_activity_list')
-            ->where('status', 'complete')
-            ->count();
-
-        $ongoingActivitiesAdmin = DB::connection('server26')->table('my_activity_list')
-            ->where('status', 'ongoing', 'on going')
-            ->count();
-
-        // dd($ongoingActivitiesAdmin);
-
-        // 🔹 Today's total count (as before)
+        // 🔹 Today's total counts
         $totalActivitiesTodayAdmin = DB::connection('server26')->table('my_activity_list')
-            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
-                Carbon::now()->startOfDay()->format('Y-m-d H:i:s'),
-                Carbon::now()->endOfDay()->format('Y-m-d H:i:s'),
-            ])
+            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->count();
 
-        // 🔹 Today's total count (as before)
+        // $totalApprovalAdmin = DB::connection('server26')->table('my_activity_list')
+        //     ->where('status', 'For Engineer Approval')
+        //     ->count();
+
         $totalActivitiesToday = DB::connection('server26')->table('my_activity_list')
             ->where('emp_name', $empName)
-            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
-                Carbon::now()->startOfDay()->format('Y-m-d H:i:s'),
-                Carbon::now()->endOfDay()->format('Y-m-d H:i:s'),
-            ])
+            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->count();
 
         $myActivitiesToday = DB::connection('server26')->table('my_activity_list')
             ->where('emp_name', $empName)
-            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
-                Carbon::now()->startOfDay()->format('Y-m-d H:i:s'),
-                Carbon::now()->endOfDay()->format('Y-m-d H:i:s'),
-            ])
+            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->pluck('my_activity');
 
-
-        // 🔹 Breakdown by status for bar chart (today only)
+        // 🔹 Technician bar chart
         $todayStatuses = ['complete', 'ongoing', 'on going'];
         $datasets = [];
-
-        // 🔹 Assign colors per status
         $statusColors = [
             'complete' => '#34D399', // green
             'ongoing' => '#60A5FA',  // blue
             'on going' => '#FBBF24', // yellow
         ];
 
-        // 🔹 Loop bawat status para makuha total duration (oras) per activity
         foreach ($todayStatuses as $status) {
             $data = [];
-
             foreach ($myActivitiesToday as $activity) {
-                // Compute duration (oras) per activity + status
                 $duration = DB::connection('server26')->table('my_activity_list')
-                    ->selectRaw("
-                SUM(
-                    TIME_TO_SEC(
-                        TIMEDIFF(
-                            STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s'),
-                            STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')
-                        )
-                    ) / 3600
-                ) AS total_hours
-            ")
+                    ->selectRaw("SUM(TIME_TO_SEC(TIMEDIFF(STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s'), STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')))/3600) AS total_hours")
                     ->where('emp_name', $empName)
                     ->where('status', $status)
                     ->where('my_activity', $activity)
-                    ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
-                        Carbon::now()->startOfDay()->format('Y-m-d H:i:s'),
-                        Carbon::now()->endOfDay()->format('Y-m-d H:i:s'),
-                    ])
+                    ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
                     ->value('total_hours');
-
-                // Default 0 kung null
                 $data[] = $duration ? round($duration, 2) : 0;
             }
-
             $datasets[] = [
                 'label' => ucfirst($status),
                 'data' => $data,
@@ -117,197 +88,95 @@ class DashboardController extends Controller
             ];
         }
 
-        // 🔹 Final bar chart data (grouped, not stacked)
         $barChartData = [
             'labels' => $myActivitiesToday,
             'datasets' => $datasets,
         ];
 
-
-
-        $todayStart = Carbon::now()->startOfDay()->format('Y-m-d H:i:s');
-        $todayEnd   = Carbon::now()->endOfDay()->format('Y-m-d H:i:s');
-
-        // 🔹 Kunin lahat ng employee name (labels)
+        // 🔹 Admin bar chart
         $myActivitiesTodayAdmin = DB::connection('server26')->table('my_activity_list')
-            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$todayStart, $todayEnd])
+            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->pluck('emp_name')
             ->unique()
             ->values()
             ->toArray();
 
-        // 🔹 Breakdown by status
-        $todayStatusesAdmin = ['complete', 'ongoing'];
-        $statusCountsAdmin = [];
-
-        foreach ($todayStatusesAdmin as $statusAdmin) {
-            $countAdmin = DB::connection('server26')->table('my_activity_list')
-                ->where('status', $statusAdmin)
-                ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$todayStart, $todayEnd])
-                ->count();
-
-            $statusCountsAdmin[$statusAdmin] = $countAdmin;
-        }
-
-        // 🔹 Prepare valid data for Chart.js
-        // 🔹 Prepare valid data for Chart.js (correct per technician count)
-        $barChartDataAdmin = [
-            'labels' => $myActivitiesTodayAdmin, // list of employee names
-            'datasets' => [
-                [
-                    'label' => 'Completed',
-                    'data' => array_map(function ($emp) use ($todayStart, $todayEnd) {
-                        return DB::connection('server26')->table('my_activity_list')
-                            ->where('emp_name', $emp)
-                            ->where('status', 'complete')
-                            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$todayStart, $todayEnd])
-                            ->count();
-                    }, $myActivitiesTodayAdmin),
-                    'backgroundColor' => '#34D399',
-                ],
-                [
-                    'label' => 'Ongoing',
-                    'data' => array_map(function ($emp) use ($todayStart, $todayEnd) {
-                        return DB::connection('server26')->table('my_activity_list')
-                            ->where('emp_name', $emp)
-                            ->where('status', 'ongoing')
-                            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$todayStart, $todayEnd])
-                            ->count();
-                    }, $myActivitiesTodayAdmin),
-                    'backgroundColor' => '#60A5FA',
-                ],
-            ],
-        ];
-
-
-        $todayStartPerTechnician = Carbon::now()->startOfDay()->format('Y-m-d H:i:s');
-        $todayEndPerTechnician   = Carbon::now()->endOfDay()->format('Y-m-d H:i:s');
-
-        // 🔹 Get all technicians (X-axis labels)
-        $myActivitiesTodayAdminPerTechnician = DB::connection('server26')->table('my_activity_list')
-            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
-                $todayStartPerTechnician,
-                $todayEndPerTechnician
-            ])
-            ->pluck('emp_name')
-            ->unique()
-            ->values()
-            ->toArray();
-
-        // 🔹 Get all distinct activities
+        $datasetsAdminPerTechnician = [];
         $activitiesList = DB::connection('server26')->table('my_activity_list')
-            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
-                $todayStartPerTechnician,
-                $todayEndPerTechnician
-            ])
+            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->pluck('my_activity')
             ->unique()
             ->values()
             ->toArray();
 
-        // 🔹 Get total minutes per technician per activity
         $rawData = DB::connection('server26')->table('my_activity_list')
-            ->select(
-                'emp_name',
-                'my_activity',
-                DB::raw("
-            SUM(
-                TIMESTAMPDIFF(
-                    MINUTE,
-                    STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s'),
-                    STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s')
-                )
-            ) AS total_minutes
-        ")
-            )
-            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
-                $todayStartPerTechnician,
-                $todayEndPerTechnician
-            ])
+            ->select('emp_name', 'my_activity', DB::raw("SUM(TIMESTAMPDIFF(MINUTE, STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s'), STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s'))) AS total_minutes"))
+            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->groupBy('emp_name', 'my_activity')
             ->get();
 
+        $randomColor = fn() => sprintf('#%06X', mt_rand(0, 0xFFFFFF));
 
-        // 🔹 Generate random color function
-        function randomColor()
-        {
-            return sprintf('#%06X', mt_rand(0, 0xFFFFFF));
-        }
-
-        // 🔹 Build datasets per activity with auto random colors
-        $datasets = [];
         foreach ($activitiesList as $activity) {
-            $datasets[] = [
+            $datasetsAdminPerTechnician[] = [
                 'label' => $activity,
-                'backgroundColor' => randomColor(),
+                'backgroundColor' => $randomColor(),
                 'data' => array_map(function ($tech) use ($rawData, $activity) {
                     $match = $rawData->firstWhere(fn($r) => $r->emp_name === $tech && $r->my_activity === $activity);
                     return $match ? round($match->total_minutes / 60, 2) : 0;
-                }, $myActivitiesTodayAdminPerTechnician),
+                }, $myActivitiesTodayAdmin),
             ];
         }
 
-        // 🔹 I-pass mo pa rin sa inertia or blade
-        $barChartDataAdminPerTechnician = [
-            'labels' => $myActivitiesTodayAdminPerTechnician,
-            'datasets' => $datasets,
+        $barChartDataAdmin = [
+            'labels' => $myActivitiesTodayAdmin,
+            'datasets' => [
+                [
+                    'label' => 'Completed',
+                    'data' => array_map(fn($emp) => DB::connection('server26')->table('my_activity_list')
+                        ->where('emp_name', $emp)->where('status', 'complete')
+                        ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
+                        ->count(), $myActivitiesTodayAdmin),
+                    'backgroundColor' => '#34D399',
+                ],
+                [
+                    'label' => 'Ongoing',
+                    'data' => array_map(fn($emp) => DB::connection('server26')->table('my_activity_list')
+                        ->where('emp_name', $emp)->where('status', 'ongoing')
+                        ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
+                        ->count(), $myActivitiesTodayAdmin),
+                    'backgroundColor' => '#60A5FA',
+                ],
+            ],
         ];
 
-
-
-        // 🔹 Final chart data for Chart.js
         $barChartDataAdminPerTechnician = [
-            'labels' => $myActivitiesTodayAdminPerTechnician,
-            'datasets' => $datasets,
+            'labels' => $myActivitiesTodayAdmin,
+            'datasets' => $datasetsAdminPerTechnician,
         ];
 
-        // 🔹 Ranking per day based on activity count first, then completion speed
-        $todayStart = Carbon::now()->startOfDay()->format('Y-m-d H:i:s');
-        $todayEnd   = Carbon::now()->endOfDay()->format('Y-m-d H:i:s');
-
+        // 🔹 Ranking
         $ranking = DB::connection('server26')
             ->table('my_activity_list')
             ->select(
                 'emp_name',
                 DB::raw("DATE(STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')) AS activity_date"),
-
-                // ✅ Average completion time (for tie-breaking)
-                DB::raw("
-            CAST(
-                AVG(
-                    TIMESTAMPDIFF(
-                        MINUTE,
-                        STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s'),
-                        STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s')
-                    )
-                ) AS DECIMAL(10,2)
-            ) AS avg_completion_minutes
-        "),
-
-                // ✅ Earliest completion (for 2nd tie-break)
+                DB::raw("CAST(AVG(TIMESTAMPDIFF(MINUTE, STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s'), STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s'))) AS DECIMAL(10,2)) AS avg_completion_minutes"),
                 DB::raw("MIN(STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s')) AS earliest_completion_time"),
-
-                // ✅ Total completed (main basis for ranking)
                 DB::raw("COUNT(my_activity) AS total_completed")
             )
             ->whereRaw("LOWER(status) LIKE 'complete%'")
-            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$todayStart, $todayEnd])
+            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->groupBy('emp_name', DB::raw("DATE(STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s'))"))
-            ->orderByDesc('total_completed') // 🥇 Main: more completed = higher rank
-            ->orderBy(DB::raw('avg_completion_minutes + 0'), 'asc') // ⚡ Tie 1: faster avg time
-            ->orderBy('earliest_completion_time', 'asc') // 🕓 Tie 2: earliest finish
-            ->get();
-
-        // 🔹 Assign rank manually (Rank 1 = highest total + fastest)
-        $ranked = $ranking->values()->map(function ($row, $index) {
-            $row->rank = $index + 1;
-            return $row;
-        });
-
-
-
-
-
+            ->orderByDesc('total_completed')
+            ->orderBy(DB::raw('avg_completion_minutes + 0'), 'asc')
+            ->orderBy('earliest_completion_time', 'asc')
+            ->get()
+            ->values()
+            ->map(function ($row, $index) {
+                $row->rank = $index + 1;
+                return $row;
+            });
 
         return Inertia::render('Dashboard', [
             'emp_data' => $empData,
@@ -318,11 +187,13 @@ class DashboardController extends Controller
             'completedActivitiesAdmin' => $completedActivitiesAdmin,
             'ongoingActivitiesAdmin' => $ongoingActivitiesAdmin,
             'totalActivitiesTodayAdmin' => $totalActivitiesTodayAdmin,
+            // 'totalApprovalAdmin' => $totalApprovalAdmin,
             'totalActivitiesToday' => $totalActivitiesToday,
             'barChartData' => $barChartData,
             'barChartDataAdmin' => $barChartDataAdmin,
             'barChartDataAdminPerTechnician' => $barChartDataAdminPerTechnician,
-            'ranked' => $ranked,
+            'ranked' => $ranking,
+            'selectedDate' => $date->format('Y-m-d'),
         ]);
     }
 }

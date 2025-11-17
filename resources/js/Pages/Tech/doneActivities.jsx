@@ -44,34 +44,34 @@ function getShiftBadge(row) {
       const totalMinutes = hours * 60 + minutes;
       if (totalMinutes >= 7 * 60 + 1 && totalMinutes <= 19 * 60) {
         shift = "A-Shift";
-        badgeClass = "badge bg-primary text-black";
+        badgeClass = "badge bg-primary text-white";
       } else {
         shift = "C-Shift";
-        badgeClass = "badge bg-warning text-black";
+        badgeClass = "badge bg-warning text-white";
       }
     } else {
       shift = "Unknown";
-      badgeClass = "badge bg-secondary text-black";
+      badgeClass = "badge bg-secondary text-white";
     }
   } else {
-    if (shift === "A-Shift") badgeClass = "badge bg-primary  text-black";
-    else if (shift === "C-Shift") badgeClass = "badge bg-warning  text-black";
+    if (shift === "A-Shift") badgeClass = "badge bg-primary  text-white";
+    else if (shift === "C-Shift") badgeClass = "badge bg-warning  text-white";
   }
   return <span className={badgeClass}>{shift}</span>;
 }
 
 function getStatusBadge(status) {
-  if (!status) return <span className="badge bg-secondary text-black">Unknown</span>;
+  if (!status) return <span className="badge bg-secondary text-white">Unknown</span>;
   const lower = status.toLowerCase();
   if (lower.startsWith("ongoing") || lower === "on-going")
-    return <span className="badge bg-info text-black">{status}</span>;
+    return <span className="badge bg-info text-white">{status}</span>;
   if (lower === "complete")
-    return <span className="badge bg-success text-black">{status}</span>;
+    return <span className="badge bg-success text-white">{status}</span>;
   if (lower.startsWith("for engineer approval"))
-    return <span className="badge bg-primary text-black">{status}</span>;
-    if (lower === "reject")
-    return <span className="badge bg-red-600 text-bold text-black">{status}</span>;
-  return <span className="badge bg-secondary text-black">{status}</span>;
+    return <span className="badge bg-primary text-white">{status}</span>;
+    if (lower === "rejected")
+    return <span className="badge bg-red-600 text-bold text-white">{status}</span>;
+  return <span className="badge bg-secondary text-white">{status}</span>;
 }
 
 export default function Activity({
@@ -286,7 +286,7 @@ useEffect(() => {
       <label className="block text-white mb-1">Approver ID</label>
       <input
         value={selectedActivity.approver_id}
-        className="w-full p-2 rounded border bg-gray-600 text-blue-400"
+        className="w-full p-2 rounded border bg-gray-600 text-blue-300"
         readOnly
       />
     </div>
@@ -295,7 +295,7 @@ useEffect(() => {
       <label className="block text-white mb-1">Approver Name</label>
       <input
         value={selectedActivity.approver_name}
-        className="w-full p-2 rounded border bg-gray-600 text-blue-400"
+        className="w-full p-2 rounded border bg-gray-600 text-blue-300"
         readOnly
       />
     </div>
@@ -304,7 +304,7 @@ useEffect(() => {
       <label className="block text-white mb-1">Date Approved</label>
       <input
         value={selectedActivity.approve_date}
-        className="w-full p-2 rounded border bg-gray-600 text-blue-400"
+        className="w-full p-2 rounded border bg-gray-600 text-blue-300"
         readOnly
       />
     </div>
@@ -314,7 +314,7 @@ useEffect(() => {
         <label className="block text-white mb-1">Approver Remarks</label>
         <textarea
           value={selectedActivity.remarks}
-          className="w-full p-3 rounded border text-white bg-gray-600"
+           className="w-full p-2 rounded border bg-gray-600 text-blue-300"
           readOnly
         />
       </div>
@@ -328,7 +328,7 @@ useEffect(() => {
       <label className="block text-white mb-1">Rejector ID</label>
       <input
         value={selectedActivity.rejector_id}
-        className="w-full p-2 rounded border bg-gray-600 text-blue-400"
+        className="w-full p-2 rounded border bg-gray-600 text-blue-300"
         readOnly
       />
     </div>
@@ -337,7 +337,7 @@ useEffect(() => {
       <label className="block text-white mb-1">Rejector Name</label>
       <input
         value={selectedActivity.rejector_name}
-        className="w-full p-2 rounded border bg-gray-600 text-blue-400"
+        className="w-full p-2 rounded border bg-gray-600 text-blue-300"
         readOnly
       />
     </div>
@@ -346,17 +346,17 @@ useEffect(() => {
       <label className="block text-white mb-1">Date Reject</label>
       <input
         value={selectedActivity.rejected_date}
-        className="w-full p-2 rounded border bg-gray-600 text-blue-400"
+        className="w-full p-2 rounded border bg-gray-600 text-blue-300"
         readOnly
       />
     </div>
 
-    {selectedActivity.reject_remarks && (   // 👈 display lang kung may remarks
+    {selectedActivity.remarks && (   // 👈 display lang kung may remarks
       <div className="mb-4">
         <label className="block text-white mb-1">Rejector Remarks</label>
         <textarea
-          value={selectedActivity.reject_remarks}
-           className="w-full p-2 rounded border bg-gray-600 text-blue-400"
+          value={selectedActivity.remarks}
+           className="w-full p-2 rounded border bg-gray-600 text-blue-300"
           readOnly
         />
       </div>
@@ -387,15 +387,22 @@ useEffect(() => {
         </div>
 
         <div className="mb-4">
-          <label className="block text-white mb-1">Status</label>
-          <input
-            type="text"
-            value={selectedActivity.statusText}
-            style={{ textTransform: "capitalize" }}
-            className="w-full p-2 rounded border bg-blue-500 text-white"
-            readOnly
-          />
-        </div>
+  <label className="block text-white mb-1">Status</label>
+  <input
+    type="text"
+    value={selectedActivity.statusText}
+    style={{ textTransform: "capitalize" }}
+    className={`w-full p-2 rounded border text-white ${
+      selectedActivity.statusText === "Complete"
+        ? "bg-green-500"
+        : selectedActivity.statusText === "Rejected"
+        ? "bg-red-600"
+        : "bg-blue-500"
+    }`}
+    readOnly
+  />
+</div>
+
 
         <div className="mb-4">
           <label className="block text-white mb-1">Note</label>

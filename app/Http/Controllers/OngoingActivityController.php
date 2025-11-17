@@ -414,6 +414,8 @@ class OngoingActivityController extends Controller
             ->where('status', 'like', 'for engineer approval%')
             ->count();
 
+        // dd($forApprovalCount);
+
         return Inertia::render('Tech/forApproval', [
             'tableData' => $result['data'],
             'activityOptions' => $activityOptions,
@@ -552,5 +554,21 @@ class OngoingActivityController extends Controller
                 'emp_name' => session('emp_data')['emp_name'] ?? null,
             ]
         ]);
+    }
+
+    public function reject(Request $request, $id)
+    {
+        DB::connection('server26')->table('my_activity_list')
+            ->where('id', $id)
+            ->update([
+                'rejector_id'   => $request->rejector_id,
+                'rejector_name' => $request->rejector_name,
+                'rejected_date' => $request->rejected_date,
+                'remarks'       => $request->remarks,
+                'status'        => 'Rejected',
+                // 'time_out'      => Carbon::now()->format('M/d/Y H:i:s'), // → Nov/17/2025 15:13:49
+            ]);
+
+        return back()->with('success', 'Activity rejected successfully');
     }
 }

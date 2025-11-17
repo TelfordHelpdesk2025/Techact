@@ -45,6 +45,9 @@ Route::get('/techact/forApproval', [OngoingActivityController::class, 'forApprov
 
 Route::put('/techact/forApproval/approve/{id}', [OngoingActivityController::class, 'forApprovalActivity'])->name('ongoing.approve');
 
+Route::put('/techact/forApproval/reject/{id}', [OngoingActivityController::class, 'reject']);
+
+
 // Route::get('/techact', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/activity/list', [ActivityController::class, 'index'])->name('activity.list');
@@ -57,8 +60,17 @@ Route::delete('/activity/delete/{id}', [ActivityController::class, 'destroy'])->
 Route::get('/export-activities', [ActivityController::class, 'indexExport'])
     ->name('export.activities');
 
-Route::get('/api/export-activities', [ActivityController::class, 'getQuarterData'])
+// Route::get('/api/export-activities', [ActivityController::class, 'getQuarterData'])
+//     ->name('api.export.activities');
+
+// web.php
+Route::get('/activity/export', [ActivityController::class, 'indexExport'])
+    ->name('activity.export');
+
+// api.php
+Route::get('/export/activities', [ActivityController::class, 'getActivityData'])
     ->name('api.export.activities');
+
 
 
 // fallback

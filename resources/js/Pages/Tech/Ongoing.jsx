@@ -43,32 +43,32 @@ function getShiftBadge(row) {
       const totalMinutes = hours * 60 + minutes;
       if (totalMinutes >= 7 * 60 + 1 && totalMinutes <= 19 * 60) {
         shift = "A-Shift";
-        badgeClass = "badge bg-primary text-black";
+        badgeClass = "badge bg-primary text-white";
       } else {
         shift = "C-Shift";
-        badgeClass = "badge bg-warning text-black";
+        badgeClass = "badge bg-warning text-white";
       }
     } else {
       shift = "Unknown";
-      badgeClass = "badge bg-secondary text-black";
+      badgeClass = "badge bg-secondary text-white";
     }
   } else {
-    if (shift === "A-Shift") badgeClass = "badge bg-primary  text-black";
-    else if (shift === "C-Shift") badgeClass = "badge bg-warning  text-black";
+    if (shift === "A-Shift") badgeClass = "badge bg-primary  text-white";
+    else if (shift === "C-Shift") badgeClass = "badge bg-warning  text-white";
   }
   return <span className={badgeClass}>{shift}</span>;
 }
 
 function getStatusBadge(status) {
-  if (!status) return <span className="badge bg-secondary text-black">Unknown</span>;
+  if (!status) return <span className="badge bg-secondary text-white">Unknown</span>;
   const lower = status.toLowerCase();
   if (lower.startsWith("ongoing") || lower === "on-going")
-    return <span className="badge bg-info text-black">{status}</span>;
+    return <span className="badge bg-info text-white">{status}</span>;
   if (lower === "complete")
-    return <span className="badge bg-success text-black">{status}</span>;
+    return <span className="badge bg-success text-white">{status}</span>;
   if (lower.startsWith("for engineer approval"))
-    return <span className="badge bg-primary text-black">{status}</span>;
-  return <span className="badge bg-secondary text-black">{status}</span>;
+    return <span className="badge bg-primary text-white">{status}</span>;
+  return <span className="badge bg-secondary text-white">{status}</span>;
 }
 
 export default function Activity({
@@ -165,8 +165,8 @@ const handleSubmit = (e) => {
     (row) =>
       row.emp_id === empId &&
       (row.status?.toLowerCase() === "ongoing" ||
-        row.status?.toLowerCase() === "on-going" ||
-        row.status?.toLowerCase() === "for engineer approval")
+        row.status?.toLowerCase() === "on-going" )
+        // row.status?.toLowerCase() === "for engineer approval")
   );
 
   const dataWithBadgesAndDuration = filteredData.map((row, index) => {

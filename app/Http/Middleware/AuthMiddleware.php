@@ -18,6 +18,8 @@ class AuthMiddleware
 
         // COMMENT OUT IF NO SPECIFIC DEPT OR JOB TITLE
         if (session('emp_data') && !in_array(session('emp_data')['emp_dept'], ['Equipment Engineering']) && !in_array(session('emp_data')['emp_system_role'], ['admin', 'superadmin'])) {
+            session()->forget('emp_data');
+            session()->flush();
             return redirect()->route('unauthorized');
         }
 

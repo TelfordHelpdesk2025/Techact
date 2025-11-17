@@ -23,7 +23,6 @@ export default function Dashboard({
   completedActivitiesAdmin,
   ongoingActivitiesAdmin,
   totalActivitiesTodayAdmin,
-  totalApprovalAdmin,
   emp_data,
   barChartData,
   barChartDataAdmin,
@@ -31,28 +30,21 @@ export default function Dashboard({
   ranked,
   selectedDate, // ✅ pass from backend
 }) {
-
-  
   const role = emp_data?.emp_system_role;
 
   // 🟢 Chart refs
   const adminPerTechChartRef = useRef(null);
 
-// 🟢 Date picker state
-const [date, setDate] = useState(selectedDate || new Date().toISOString().slice(0, 10));
-const [tempDate, setTempDate] = useState(date); // temporary state para sa input
+  // 🟢 Date picker state
+  const [date, setDate] = useState(selectedDate || new Date().toISOString().slice(0, 10));
 
-// 🔹 Input handler (hindi agad nagfe-fetch)
-const handleTempDateChange = (e) => {
-    setTempDate(e.target.value);
-};
+  const handleDateChange = (e) => {
+    const newDate = e.target.value;
+    setDate(newDate);
 
-// 🔹 Filter button handler
-const applyDateFilter = () => {
-    setDate(tempDate); // update current date
-    router.get(route("dashboard"), { date: tempDate }, { preserveState: true });
-};
-
+    // Fetch dashboard with selected date
+    router.get(route("dashboard"), { date: newDate }, { preserveState: true });
+  };
 
   // 🔹 Chart options
   const options = {
@@ -155,7 +147,7 @@ const applyDateFilter = () => {
           
 
           <p className="mb-4">
-            Welcome back Admin, {emp_data?.emp_firstname}!
+            Welcome back sir, {emp_data?.emp_firstname}!
           </p>
 
           {/* Summary Cards */}
@@ -164,27 +156,18 @@ const applyDateFilter = () => {
             <SummaryCard title="Completed" value={completedActivitiesAdmin} color="bg-sky-200" />
             <SummaryCard title="Ongoing" value={ongoingActivitiesAdmin} color="bg-emerald-200" />
             <SummaryCard title="Total Activities Today" value={totalActivitiesTodayAdmin} color="bg-blue-200" />
-            {/* <SummaryCard title="Total For Approval" value={totalApprovalAdmin} color="bg-blue-400" /> */}
           </div>
 
-          {/* 🔹 Date Filter with Button */}
-<div className="mb-4 flex items-center gap-2">
-    <label className="font-medium text-md">Select Date:</label>
-    <input
-        type="date"
-        value={tempDate}
-        onChange={handleTempDateChange}
-        className="px-3 py-1 border rounded dark:text-black dark:bg-white"
-    />
-    <button
-        onClick={applyDateFilter}
-        className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-    >
-      <i className="fa-solid fa-filter mr-1"></i>
-        Filter
-    </button>
-</div>
-
+          {/* 🔹 Date Filter */}
+          <div className="mb-4 flex flex-end">
+            <label className="font-medium text-md">Select Date:</label>
+            <input
+              type="date"
+              value={date}
+              onChange={handleDateChange}
+              className="ml-2 px-3 py-1 border rounded text-gray-700 w-half"
+            />
+          </div>
 
           {/* Charts */}
           <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-6">
@@ -198,16 +181,9 @@ const applyDateFilter = () => {
 
           {/* Ranking Section */}
           <div className="p-4 bg-white rounded-lg shadow text-gray-700 mt-6">
-           <h2 className="text-lg font-semibold mb-4">
-  <i className="fas fa-trophy mr-2"></i>
-  Completion Ranking (
-  {(() => {
-    const d = new Date(date);
-    return `${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}/${d.getFullYear()}`;
-  })()}
-  )
-</h2>
-
+            <h2 className="text-lg font-semibold mb-4">
+              <i className="fas fa-trophy mr-2"></i>Completion Ranking ({date})
+            </h2>
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-center border border-gray-200">
                 <thead className="bg-gray-100">
@@ -238,12 +214,7 @@ const applyDateFilter = () => {
                         <td className="py-2 px-4 border">{tech.emp_name}</td>
                         <td className="py-2 px-4 border">{parseFloat(tech.avg_completion_minutes).toFixed(2)}</td>
                         <td className="py-2 px-4 border">{tech.total_completed}</td>
-                        <td className="py-2 px-4 border">
-  {tech.activity_date
-    ? new Date(tech.activity_date).toLocaleDateString("en-US")
-    : ""}
-</td>
-
+                        <td className="py-2 px-4 border">{tech.activity_date}</td>
                       </tr>
                     ))
                   ) : (
