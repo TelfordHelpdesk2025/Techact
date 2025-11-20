@@ -25,7 +25,7 @@ class OngoingController extends Controller
     {
         $result = $this->datatable->handle(
             $request,
-            'server26',
+            'authify',
             'my_activity_list',
             [
                 'searchColumns' => ['emp_name', 'Shift', 'my_activity', 'machine', 'log_time', 'status'],
@@ -107,7 +107,7 @@ class OngoingController extends Controller
             ? 'On Going'
             : 'For Approval';
 
-        DB::connection('server26')->table('my_activity_list')->insert([
+        DB::connection('authify')->table('my_activity_list')->insert([
             'emp_id' => $request->emp_id,
             'emp_name' => $request->emp_name,
             'Shift' => $request->Shift,
@@ -126,7 +126,7 @@ class OngoingController extends Controller
      */
     public function removeActivity(Request $request)
     {
-        DB::connection('server26')->table('my_activity_list')
+        DB::connection('authify')->table('my_activity_list')
             ->where('emp_id', $request->input('emp_id'))
             ->delete();
 
@@ -141,7 +141,7 @@ class OngoingController extends Controller
         $id = $request->input('emp_id');
         $role = $request->input('role');
 
-        DB::connection('server26')->table('my_activity_list')
+        DB::connection('authify')->table('my_activity_list')
             ->where('emp_id', $id)
             ->update([
                 'emp_role' => $role,

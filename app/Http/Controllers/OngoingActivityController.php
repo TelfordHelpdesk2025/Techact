@@ -36,7 +36,7 @@ class OngoingActivityController extends Controller
         // ✅ Handle datatable query na may filters
         $result = $this->datatable->handle(
             $request,
-            'server26', // Connection name (must stay as string)
+            'authify', // Connection name (must stay as string)
             'my_activity_list', // Table name
             [
                 'defaultSortBy' => 'emp_id',
@@ -172,7 +172,7 @@ class OngoingActivityController extends Controller
                 'status'      => 'required|string',
             ]);
 
-            DB::connection('server26')->table('my_activity_list')->insert([
+            DB::connection('authify')->table('my_activity_list')->insert([
                 'emp_id'      => $request->emp_id,
                 'emp_name'    => $request->emp_name,
                 'shift'       => $request->shift,
@@ -221,7 +221,7 @@ class OngoingActivityController extends Controller
         // ✅ parse any human-readable date/time
         $timeOut = \Carbon\Carbon::parse($request->time_out)->format('M/d/Y H:i:s');
 
-        DB::connection('server26')->table('my_activity_list')
+        DB::connection('authify')->table('my_activity_list')
             ->where('id', $id)
             ->update([
                 'time_out'    => $timeOut,
@@ -350,23 +350,25 @@ class OngoingActivityController extends Controller
         // Handle datatable query na may filters
         $result = $this->datatable->handle(
             $request,
-            'server26', // connection
+            'authify', // connection
             'my_activity_list', // table
             [
                 'defaultSortBy' => 'emp_id',
                 'defaultSortDirection' => 'desc',
                 'dateColumn' => 'log_time',
                 'searchColumns' => ['emp_id', 'emp_name', 'my_activity', 'status'],
+
                 'conditions' => function ($query) use ($request) {
-                    // Limit lang sa Ongoing-related activities
+
+                    // Limit only to activities with specific statuses (except Deleted)
                     $query->where(function ($q) {
                         $q->where('status', 'like', 'for engineer approval%');
-                    });
+                    })->where('status', '!=', 'Deleted');
 
-                    // Search using dropdown
+                    // Search using dropdown filter
                     if ($request->filled('dropdownSearchValue') && $request->filled('dropdownFields')) {
                         $value = $request->input('dropdownSearchValue');
-                        $fields = explode(',', $request->input('dropdownFields')); // comma-separated
+                        $fields = explode(',', $request->input('dropdownFields'));
 
                         $query->where(function ($q) use ($fields, $value) {
                             foreach ($fields as $field) {
@@ -377,6 +379,7 @@ class OngoingActivityController extends Controller
 
                     return $query;
                 },
+
                 'filename' => 'activity_export',
                 'exportColumns' => [
                     'emp_id',
@@ -392,6 +395,7 @@ class OngoingActivityController extends Controller
                 ],
             ]
         );
+
 
         if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
             return $result;
@@ -410,7 +414,7 @@ class OngoingActivityController extends Controller
             ->toArray();
 
         // ✅ Count kung ilan yung "For Engineer Approval"
-        $forApprovalCount = DB::connection('server26')->table('my_activity_list')
+        $forApprovalCount = DB::connection('authify')->table('my_activity_list')
             ->where('status', 'like', 'for engineer approval%')
             ->count();
 
@@ -466,7 +470,7 @@ class OngoingActivityController extends Controller
                 break;
         }
 
-        DB::connection('server26')->table('my_activity_list')
+        DB::connection('authify')->table('my_activity_list')
             ->where('id', $id)
             ->update([
                 'approver_id'   => $request->approver_id,
@@ -498,7 +502,7 @@ class OngoingActivityController extends Controller
         // Handle datatable query na may filters
         $result = $this->datatable->handle(
             $request,
-            'server26', // connection
+            'authify', // connection
             'my_activity_list', // table
             [
                 'defaultSortBy' => 'emp_id',
@@ -558,7 +562,7 @@ class OngoingActivityController extends Controller
 
     public function reject(Request $request, $id)
     {
-        DB::connection('server26')->table('my_activity_list')
+        DB::connection('authify')->table('my_activity_list')
             ->where('id', $id)
             ->update([
                 'rejector_id'   => $request->rejector_id,

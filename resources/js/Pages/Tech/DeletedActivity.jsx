@@ -3,30 +3,30 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router } from "@inertiajs/react";
 import DataTable from "@/Components/DataTable";
 
-function calculateDuration(row) {
-  const { log_time, time_out, status } = row;
+// function calculateDuration(row) {
+//   const { log_time, time_out, status } = row;
 
-  const start = log_time ? new Date(log_time) : null;
-  let end = null;
+//   const start = log_time ? new Date(log_time) : null;
+//   let end = null;
 
-  // ✅ Kung may time_out gamitin siya, kung wala current time ang fallback
-  if (time_out) {
-    end = new Date(time_out);
-  } else {
-    end = new Date(); 
-  }
+//   // ✅ Kung may time_out gamitin siya, kung wala current time ang fallback
+//   if (time_out) {
+//     end = new Date(time_out);
+//   } else {
+//     end = new Date(); 
+//   }
 
-  if (!start || isNaN(start) || !end || isNaN(end)) return "-";
+//   if (!start || isNaN(start) || !end || isNaN(end)) return "-";
 
-  const diffMs = end - start;
-  if (diffMs < 0) return "-";
+//   const diffMs = end - start;
+//   if (diffMs < 0) return "-";
 
-  const diffMinutes = Math.floor(diffMs / 60000);
-  if (diffMinutes > 0) return `${diffMinutes} min`;
+//   const diffMinutes = Math.floor(diffMs / 60000);
+//   if (diffMinutes > 0) return `${diffMinutes} min`;
 
-  const diffSeconds = Math.floor(diffMs / 1000);
-  return `${diffSeconds} secs`;
-}
+//   const diffSeconds = Math.floor(diffMs / 1000);
+//   return `${diffSeconds} secs`;
+// }
 
 
 function getShiftBadge(row) {
@@ -69,14 +69,14 @@ function getStatusBadge(status) {
     return <span className="badge bg-red-600 text-bold text-white">{status}</span>;
   return <span className="badge bg-secondary text-white">{status}</span>;
 }
-export default function Activity({ tableData, tableFilters }) {
+export default function DeletedActivity({ tableData, tableFilters }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
 
  const dataWithBadgesAndDuration = (tableData?.data || []).map((row, index) => ({
   ...row,
   i: index + 1,
-  duration: calculateDuration(row),
+  // duration: calculateDuration(row),
   shift: getShiftBadge(row),
   status: getStatusBadge(row.status),
 
@@ -96,41 +96,42 @@ export default function Activity({ tableData, tableFilters }) {
         </div>
       </button>
 
-      {/* Delete Button */}
+      {/* Restore Button */}
       <button
-        className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+        className="px-3 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-700"
         onClick={() => {
-          if (confirm("Are you sure you want to mark this as Deleted?")) {
+          if (confirm("Are you sure you want to mark this as Restore?")) {
             router.put(
-              route("activity.deleted-status", { id: row.id }),
-              { item_status: "Deleted" },
+              route("activity.restore-status", { id: row.id }),
+              { item_status: "Restored" },
               {
                   onSuccess: () => {
-                  alert("🗑️ Item marked as Deleted");
+                  alert("↩️ Item marked as Restored");
                   window.location.reload(); // ✅ reload after success
                   },
-                  onError: () => alert("❌ Failed to remove this activity...!"),
+                  onError: () => alert("❌ Failed to restore this Activity...!"),
               }
             );
           }
         }}
       >
         <div className="flex items-center">
-          <i className="fa-solid fa-trash mr-1"></i>
-          Remove
+          <i className="fa-solid fa-undo mr-1"></i>
+          Restore
         </div>
       </button>
     </div>
   ),
 }));
 
-
-
   return (
     <AuthenticatedLayout>
-      <Head title="All Activities" />
+      <Head title="Deleted Activities" />
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">All Activities</h1>
+        <h1 className="text-2xl font-bold mb-4"> 
+          <i className="fa-regular fa-trash-can mr-1"></i>
+          Deleted Activities
+        </h1>
 
         <DataTable
           columns={[
@@ -140,7 +141,7 @@ export default function Activity({ tableData, tableFilters }) {
             { key: "machine", label: "Machine" },
             { key: "log_time", label: "Date Log" },
             { key: "time_out", label: "Done Date" },
-            { key: "duration", label: "Time Duration" },
+            // { key: "duration", label: "Time Duration" },
             { key: "status", label: "Status" },
             { key: "note", label: "Comment" },
             { key: "viewDetails", label: "Details" }, // Button to open modal
@@ -154,12 +155,9 @@ export default function Activity({ tableData, tableFilters }) {
             currentPage: tableData?.current_page,
             lastPage: tableData?.last_page,
           }}
-          routeName={route("tech.activity")}
+          routeName={route("tech.activity.deleted")}
           filters={tableFilters}
           rowKey="id"
-          // showExport={false}
-          // sortBy="emp_name"
-          // sortOrder="desc"
         />
 
         {/* Modal */}

@@ -27,7 +27,11 @@ class AdminController extends Controller
             'mysql',
             'admin',
             [
-                'searchColumns' => ['EMPNAME', 'EMPLOYID', 'JOB_TITLE', 'DEPARTMENT'],
+                'conditions' => function ($query) {
+                    return $query
+                        ->orderBy('emp_role', 'asc');
+                },
+                'searchColumns' => ['emp_id', 'emp_name', 'emp_role'],
             ]
         );
 
@@ -93,12 +97,12 @@ class AdminController extends Controller
     {
 
         // dd($request->all());
-        $checkIfExists = DB::table('admin')
+        $checkIfExists = DB::connection('mysql')->table('admin')
             ->where('emp_id', $request->input('id'))
             ->exists();
 
         if (!$checkIfExists) {
-            DB::table('admin')
+            DB::connection('mysql')->table('admin')
                 ->insert([
                     'emp_id' => $request->input('id'),
                     'emp_name' => $request->input('name'),
@@ -112,7 +116,7 @@ class AdminController extends Controller
 
     public function removeAdmin(Request $request)
     {
-        DB::table('admin')
+        DB::connection('mysql')->table('admin')
             ->where('emp_id', $request->input('id'))
             ->delete();
 
@@ -124,7 +128,7 @@ class AdminController extends Controller
         $id = $request->input('id');
         $role = $request->input('role');
 
-        DB::table('admin')
+        DB::connection('mysql')->table('admin')
             ->where('emp_id', $id)
             ->update([
                 'emp_role' => $role,

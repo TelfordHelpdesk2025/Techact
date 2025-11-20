@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Services\DataTableService;
+use Illuminate\Support\Facades\DB;
+
+use function Symfony\Component\Clock\now;
 
 class TechActivityController extends Controller
 {
@@ -17,23 +20,23 @@ class TechActivityController extends Controller
 
     public function index(Request $request)
     {
-        // Kung walang sort params, mag-set ng default
-        if (!$request->has('sortBy')) {
-            $request->merge(['sortBy' => 'id']);
-        }
-        if (!$request->has('sortDirection')) {
-            $request->merge(['sortDirection' => 'desc']);
-        }
 
         $result = $this->datatable->handle(
             $request,
-            'server26',
+            'authify',
             'my_activity_list',
             [
-                'searchColumns' => ['emp_name', 'my_activity', 'log_time', 'status'],
-                'exportColumns' => ['i', 'emp_name', 'shift', 'my_activity', 'machine', 'log_time', 'time_out', 'duration', 'status', 'note'],
+                'conditions' => function ($query) {
+                    return $query->where(function ($q) {
+                        $q->whereNot('item_status', 'Deleted')
+                            ->orWhereNull('item_status')
+                            ->orWhere('item_status', '');
+                    })->orderBy('log_time', 'desc');
+                },
+                'searchColumns' => ['emp_name', 'shift', 'my_activity', 'machine', 'log_time', 'time_out', 'status', 'note'],
             ]
         );
+
 
         if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
             return $result;
@@ -52,5 +55,68 @@ class TechActivityController extends Controller
                 'dropdownFields',
             ]),
         ]);
+    }
+
+    public function deletedActivity(Request $request)
+    {
+        $result = $this->datatable->handle(
+            $request,
+            'authify',
+            'my_activity_list',
+            [
+                'conditions' => function ($query) {
+                    return $query->where(function ($q) {
+                        $q->where('item_status', 'Deleted');
+                    })->orderBy('log_time', 'desc');
+                },
+                'searchColumns' => ['emp_name', 'shift', 'my_activity', 'machine', 'log_time', 'time_out', 'status', 'note'],
+            ]
+        );
+
+        if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
+            return $result;
+        }
+
+        return Inertia::render('Tech/DeletedActivity', [
+            'tableData' => $result['data'],
+            'tableFilters' => $request->only([
+                'search',
+                'perPage',
+                'sortBy',
+                'sortDirection',
+                'start',
+                'end',
+                'dropdownSearchValue',
+                'dropdownFields',
+            ]),
+        ]);
+    }
+
+    public function deletedStatus(Request $request, $id)
+    {
+        DB::connection('authify')
+            ->table('my_activity_list')
+            ->where('id', $id)
+            ->update([
+                'item_status' => $request->item_status,
+                'deleted_by' => session('emp_data')['emp_name'] ?? '',
+                'deleted_date' => now()
+            ]);
+
+        return back()->with('success', 'Status updated!');
+    }
+
+    public function restoreStatus(Request $request, $id)
+    {
+        DB::connection('authify')
+            ->table('my_activity_list')
+            ->where('id', $id)
+            ->update([
+                'item_status' => $request->item_status,
+                'restored_by' => session('emp_data')['emp_name'] ?? '',
+                'restored_date' => now()
+            ]);
+
+        return back()->with('success', 'Status updated!');
     }
 }

@@ -185,33 +185,15 @@ const handleSubmit = (e) => {
       viewDetails:
       enhancedRow.statusText === "For Engineer Approval" ? null : (
         <button
-          className="px-3 py-2 bg-gray-500 text-white rounded-md"
+          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
           onClick={() => {
             setSelectedActivity(enhancedRow); // ✅ now passing enhanced row
             setModalOpen(true);
           }}
         >
           <div className="flex items-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="size-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-              />
-            </svg>
-            &nbsp;View
+            <i className="fa-regular fa-eye mr-1"></i>
+            View
           </div>
         </button>
       ),
@@ -226,10 +208,7 @@ const handleSubmit = (e) => {
         {alertVisible && flash.success && (
           <div className="mb-4 p-3 rounded bg-green-500 text-white shadow">
             <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-8">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
-              </svg>
-            &nbsp;
+              <i className="fa-solid fa-circle-check mr-1"></i>
             {flash.success}
             </div>
           </div>
@@ -237,10 +216,7 @@ const handleSubmit = (e) => {
         {alertVisible && flash.error && (
           <div className="mb-4 p-3 rounded bg-red-500 text-white shadow">
             <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-8">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.25-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
-              </svg>
-          &nbsp;
+              <i className="fa-solid fa-shield-virus mr-1"></i>
           {flash.error}
           </div>
           </div>
@@ -385,11 +361,9 @@ const handleSubmit = (e) => {
             />
             <button
               type="submit"
-              className="bg-green-600 text-white px-4 py-3 rounded flex items-center justify-center"
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded flex items-center justify-center"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75h1.5m9 0h-9" />
-              </svg>
+              <i className="fa-regular fa-bookmark mr-1"></i>
               Save
             </button>
           </form>
@@ -430,12 +404,8 @@ const handleSubmit = (e) => {
     <div className="bg-gray-800 p-6 rounded shadow-lg w-1/3">
       <h2 className="text-xl font-bold mb-4 text-gray-200">
         <div className="flex items-center bg-gray-500 p-2 rounded text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-            strokeWidth={1.5} stroke="currentColor" className="size-12">
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 9-3.75h.008v.008H12V8.25Z" />
-          </svg>
-          &nbsp; My Activity
+          <i className="fa-solid fa-circle-info text-4xl mr-1"></i>
+          My Activity
         </div>
       </h2>
 
@@ -474,7 +444,7 @@ const handleSubmit = (e) => {
           <input
             name="time_out"
             value={new Date().toLocaleString()}
-            className="border p-2 text-green-300 bg-gray-600 w-full mb-2"
+            className="border p-2 text-blue-300 bg-gray-600 w-full mb-2"
             readOnly
           />
 
@@ -482,7 +452,7 @@ const handleSubmit = (e) => {
           <input
             type="text"
             value={selectedActivity.my_activity}
-            className="w-full p-2 rounded border bg-gray-600"
+            className="border p-2 text-blue-300 bg-gray-600 w-full mb-2"
             readOnly
           />
         </div>
@@ -492,7 +462,7 @@ const handleSubmit = (e) => {
           <input
             type="text"
             value={selectedActivity.machine}
-            className="w-full p-2 rounded border bg-gray-600"
+            className="border p-2 text-blue-300 bg-gray-600 w-full mb-2"
             readOnly
           />
         </div>
@@ -533,15 +503,7 @@ const handleSubmit = (e) => {
             className="px-4 py-2 bg-red-600 text-white rounded"
           >
             <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24"
-                strokeWidth={1.5} stroke="currentColor"
-                className="size-6">
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="m9.75 9.75 4.5 4.5m0-4.5-4.5 
-                     4.5M21 12a9 9 0 1 1-18 0 9 
-                     9 0 0 1 18 0Z" />
-              </svg>
+              <i className="fa-regular fa-rectangle-xmark text-2xl mr-1"></i>
               Close
             </div>
           </button>
@@ -551,21 +513,7 @@ const handleSubmit = (e) => {
             className="px-4 py-2 bg-green-600 text-white rounded"
           >
             <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24"
-                strokeWidth={1.5} stroke="currentColor"
-                className="size-6">
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 
-                     1.125v17.25c0 .621.504 1.125 
-                     1.125 1.125h12.75c.621 0 1.125-.504 
-                     1.125-1.125v-9M10.125 2.25h.375a9 
-                     9 0 0 1 9 9v.375M10.125 2.25A3.375 
-                     3.375 0 0 1 13.5 5.625v1.5c0 
-                     .621.504 1.125 1.125 1.125h1.5a3.375 
-                     3.375 0 0 1 3.375 3.375M9 15l2.25 
-                     2.25L15 12" />
-              </svg>
+              <i className="fa-regular fa-square-check text-2xl mr-1"></i>
               Done
             </div>
           </button>

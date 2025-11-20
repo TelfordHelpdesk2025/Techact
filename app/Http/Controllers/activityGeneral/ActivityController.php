@@ -26,8 +26,9 @@ class ActivityController extends Controller
             'server26',
             'activity_list',
             [
+
                 'searchColumns' => ['activity', 'description', 'created_by', 'date_created'],
-                'defaultSort' => ['id', 'desc'],
+                'defaultSort' => ['activity', 'desc'],
             ]
         );
 
@@ -60,7 +61,7 @@ class ActivityController extends Controller
             return response()->json(['error' => 'Missing date range'], 400);
         }
 
-        $rows = DB::connection('server26')->table('my_activity_list')
+        $rows = DB::connection('authify')->table('my_activity_list')
             ->whereRaw("
             STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')
             BETWEEN STR_TO_DATE(?, '%Y-%m-%d')

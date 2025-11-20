@@ -15,7 +15,8 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    console.log("Admin removed");
+                   alert("✅ removed Successful...!");
+                   window.location.reload();
                 },
             }
         );
@@ -29,7 +30,8 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
                 {
                     preserveScroll: true,
                     onSuccess: () => {
-                        console.log("Admin role changed");
+                        alert(`✅ role changed to ${role}`);
+                        window.location.reload();
                     },
                 }
             );
@@ -89,71 +91,76 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
                 showExport={false}
             >
                 {(row, close) => (
-                   <Modal
-    id="RowModal"
-    icon={<i className="fa-solid fa-user-shield"></i>}
-    title="Admin Details"
-    show={true}
-    onClose={() => tableModalClose(close)}
-    className="w-full max-w-md" // 👉 mas malapad kaysa 300px
+                       <Modal
+  id="RowModal"
+  icon="<i className='fa-solid fa-users-gear mr-2 text-blue-600'></i>"
+  title="Employee Details"
+  show={true}
+  onClose={() => tableModalClose(close)}
+  className="max-w-md w-full rounded-2xl shadow-xl bg-white dark:text-gray-200 dark:bg-gray-800 p-6 border border-gray-200 dark:border-gray-700"
 >
-    <div className="space-y-4">
-        <div className="bg-gray-50 p-4 rounded-lg border">
-            <p className="text-sm text-gray-500">Employee ID</p>
-            <p className="text-lg font-semibold text-gray-800">
-                {row.emp_id}
-            </p>
-        </div>
-
-        <div className="bg-gray-50 p-4 rounded-lg border">
-            <p className="text-sm text-gray-500">Name</p>
-            <p className="text-lg font-semibold text-gray-800">
-                {row.emp_name}
-            </p>
-        </div>
-
-        <div className="bg-gray-50 p-4 rounded-lg border">
-            <p className="text-sm text-gray-500">Role</p>
-            <p className="text-lg font-semibold text-gray-800 capitalize">
-                {row.emp_role}
-            </p>
-        </div>
-
-        {["superadmin"].includes(emp_data?.emp_system_role) && (
-            <div className="pt-2 border-t">
-                <label className="block text-sm font-medium text-gray-600 mb-2">
-                    Update Role
-                </label>
-                <select
-                    defaultValue={row.emp_role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                    <option value="superadmin">Superadmin</option>
-                    <option value="admin">Admin</option>
-                    <option value="moderator">Moderator</option>
-                    <option value="approver">Approver</option>
-                </select>
-
-                <div className="flex justify-end gap-3 mt-6">
-                    <button
-                        onClick={() => removeAdmin(row.emp_id)}
-                        className="px-4 py-2 text-sm font-semibold text-red-600 border border-red-400 rounded-lg hover:bg-red-50 transition"
-                    >
-                        Remove
-                    </button>
-                    <button
-                        onClick={() => changeRole(row.emp_id)}
-                        className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
-                    >
-                        Update Role
-                    </button>
-                </div>
-            </div>
-        )}
+  <div className="space-y-4">
+    {/* User Info */}
+    <div className="text-center">
+      <div className="text-4xl text-blue-600 mb-2">
+        <i className="fa-solid fa-user-circle"></i>
+      </div>
+      <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+        {row.emp_name}
+      </h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        ID: <span className="font-semibold">{row.emp_id}</span>
+      </p>
+      <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+        Current Role:{" "}
+        <span className="font-semibold text-blue-600 dark:text-blue-400">
+          {row.emp_role}
+        </span>
+      </p>
     </div>
-</Modal>
 
+    {/* Admin Controls */}
+    {["superadmin", "admin"].includes(emp_data?.emp_system_role) && !row.emp_role.includes("superadmin") && (
+      <div className="mt-6 space-y-4">
+        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Update Role
+        </label>
+        <select
+          defaultValue={row.emp_role}
+          onChange={(e) => setRole(e.target.value)}
+          className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm p-2"
+        >
+            {emp_data?.emp_system_role === "superadmin" && (
+                <option value="superadmin">Superadmin</option>
+            )}
+          
+
+                                    <option value="admin">Admin</option>
+                                    <option value="approver">Approver</option>
+                                    <option value="toolcrib">Toolcrib</option>
+                                    <option value="seniortech">SeniorTech</option>
+                                    <option value="engineer">Engineer</option>
+                                    <option value="esd">ESD</option>
+        </select>
+
+        <div className="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => changeRole(row.emp_id)}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium transition-all duration-200"
+          >
+            <i className="fa-solid fa-rotate me-2"></i> Update Role
+          </button>
+          <button
+            onClick={() => removeAdmin(row.emp_id)}
+            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 text-sm font-medium transition-all duration-200"
+          >
+            <i className="fa-solid fa-user-slash me-2"></i> Remove
+          </button>
+        </div>
+      </div>
+    )}
+  </div>
+</Modal>
                 )}
             </DataTable>
         </AuthenticatedLayout>

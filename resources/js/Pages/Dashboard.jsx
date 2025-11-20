@@ -12,6 +12,15 @@ import {
 } from "chart.js";
 import { useEffect, useRef, useState } from "react";
 
+// ✅ Correct icon imports (FontAwesome 5)
+import {
+  FaClipboardList,
+  FaCheckCircle,
+  FaSpinner,
+  FaCalendarDay,
+  FaClipboardCheck,
+} from "react-icons/fa";
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function Dashboard({
@@ -29,50 +38,37 @@ export default function Dashboard({
   barChartDataAdmin,
   barChartDataAdminPerTechnician,
   ranked,
-  selectedDate, // ✅ pass from backend
+  selectedDate,
 }) {
-
-  
   const role = emp_data?.emp_system_role;
 
-  // 🟢 Chart refs
+  // Chart refs
   const adminPerTechChartRef = useRef(null);
 
-// 🟢 Date picker state
-const [date, setDate] = useState(selectedDate || new Date().toISOString().slice(0, 10));
-const [tempDate, setTempDate] = useState(date); // temporary state para sa input
+  // Date controls
+  const [date, setDate] = useState(selectedDate || new Date().toISOString().slice(0, 10));
+  const [tempDate, setTempDate] = useState(date);
 
-// 🔹 Input handler (hindi agad nagfe-fetch)
-const handleTempDateChange = (e) => {
-    setTempDate(e.target.value);
-};
+  const handleTempDateChange = (e) => setTempDate(e.target.value);
 
-// 🔹 Filter button handler
-const applyDateFilter = () => {
-    setDate(tempDate); // update current date
+  const applyDateFilter = () => {
+    setDate(tempDate);
     router.get(route("dashboard"), { date: tempDate }, { preserveState: true });
-};
+  };
 
-
-  // 🔹 Chart options
-  const options = {
+  // ✅ Stacked chart options
+  const stackedOptions = {
     responsive: true,
     plugins: {
       legend: { position: "bottom" },
-      title: {
-        display: true,
-        text: "Daily Activities Summary (Per Technician)",
-        font: { size: 16 },
-      },
+      title: { display: true, text: "Daily Activities (Stacked per Technician)" },
       tooltip: {
         callbacks: {
-          label: function (context) {
-            const hoursDecimal = context.raw;
-            const totalMinutes = Math.round(hoursDecimal * 60);
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            const timeLabel = minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
-            return `${context.dataset.label}: ${timeLabel}`;
+          label: (context) => {
+            const totalMinutes = Math.round(context.raw * 60);
+            const h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            return `${context.dataset.label}: ${h}h ${m}m`;
           },
         },
       },
@@ -82,55 +78,19 @@ const applyDateFilter = () => {
       y: {
         stacked: true,
         beginAtZero: true,
-        title: { display: true, text: "Duration (hours)" },
         ticks: {
-          callback: function (value) {
-            const totalMinutes = Math.round(value * 60);
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
+          callback: (value) => {
+            const mins = Math.round(value * 60);
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            return `${h}h ${m}m`;
           },
         },
       },
     },
   };
 
-  const optionsAdmin = {
-    responsive: true,
-    plugins: {
-      legend: { position: "bottom" },
-      title: { display: true, text: "Daily Activity Duration per Technician", font: { size: 16 } },
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            const hoursDecimal = context.raw;
-            const totalMinutes = Math.round(hoursDecimal * 60);
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            return `${context.dataset.label}: ${hours}h ${minutes}m`;
-          },
-        },
-      },
-    },
-    scales: {
-      x: { stacked: true },
-      y: {
-        stacked: true,
-        beginAtZero: true,
-        title: { display: true, text: "Duration (hours)" },
-        ticks: {
-          callback: function (value) {
-            const totalMinutes = Math.round(value * 60);
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
-          },
-        },
-      },
-    },
-  };
-
-  // 🕒 Auto-change bar colors every 60s
+  // Auto random bar colors every 60s
   useEffect(() => {
     const chart = adminPerTechChartRef.current;
     if (!chart) return;
@@ -150,63 +110,91 @@ const applyDateFilter = () => {
       <Head title="Dashboard" />
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
-      {["superadmin", "admin", "approver"].includes(role) ? (
+      {["superadmin", "admin", "approver", "engineer"].includes(role) ? (
         <div>
-          
-
-          <p className="mb-4">
-            Welcome back Admin, {emp_data?.emp_firstname}!
-          </p>
+          <p className="mb-4">Welcome back Admin, {emp_data?.emp_firstname}!</p>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <SummaryCard title="Total Activities" value={totalActivitiesAdmin} color="bg-cyan-200" />
-            <SummaryCard title="Completed" value={completedActivitiesAdmin} color="bg-sky-200" />
-            <SummaryCard title="Ongoing" value={ongoingActivitiesAdmin} color="bg-emerald-200" />
-            <SummaryCard title="Total Activities Today" value={totalActivitiesTodayAdmin} color="bg-blue-200" />
-            {/* <SummaryCard title="Total For Approval" value={totalApprovalAdmin} color="bg-blue-400" /> */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <SummaryCard
+              title="Total Activities"
+              value={totalActivitiesAdmin}
+              color="bg-cyan-200"
+              icon={<FaClipboardList className="text-4xl animate-bounce" />}
+            />
+            <SummaryCard
+              title="Completed"
+              value={completedActivitiesAdmin}
+              color="bg-sky-200"
+              icon={<FaCheckCircle className="text-4xl animate-bounce" />}
+            />
+            <SummaryCard
+              title="Ongoing"
+              value={ongoingActivitiesAdmin}
+              color="bg-emerald-200"
+              icon={<FaSpinner className="text-4xl animate-spin" />}
+            />
+            <SummaryCard
+              title="Total Activities Today"
+              value={totalActivitiesTodayAdmin}
+              color="bg-blue-200"
+              icon={<FaCalendarDay className="text-4xl animate-bounce" />}
+            />
+            <SummaryCard
+              title="Total For Approval"
+              value={totalApprovalAdmin}
+              color="bg-blue-400"
+              icon={<FaClipboardCheck className="text-4xl animate-bounce" />}
+            />
           </div>
 
-          {/* 🔹 Date Filter with Button */}
-<div className="mb-4 flex items-center gap-2">
-    <label className="font-medium text-md">Select Date:</label>
-    <input
-        type="date"
-        value={tempDate}
-        onChange={handleTempDateChange}
-        className="px-3 py-1 border rounded dark:text-black dark:bg-white"
-    />
-    <button
-        onClick={applyDateFilter}
-        className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-    >
-      <i className="fa-solid fa-filter mr-1"></i>
-        Filter
-    </button>
-</div>
-
+          {/* Date Filter */}
+          <div className="mb-4 flex items-center gap-2">
+            <label className="font-medium text-md">Select Date:</label>
+            <input
+              type="date"
+              value={tempDate}
+              onChange={handleTempDateChange}
+              className="px-3 py-1 border rounded dark:text-black dark:bg-white"
+            />
+            <button
+              onClick={applyDateFilter}
+              className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              <i className="fa-solid fa-filter mr-1"></i> Filter
+            </button>
+          </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-4 mb-6">
-            <div className="p-4 bg-white rounded-lg shadow text-gray-700">
-              <Bar ref={adminPerTechChartRef} data={barChartDataAdmin} options={options} />
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {/* Admin Summary Chart */}
+            <div className="p-4 bg-white rounded-lg shadow">
+              <Bar ref={adminPerTechChartRef} data={barChartDataAdmin} options={stackedOptions} />
             </div>
-            <div className="p-4 bg-white rounded-lg shadow text-gray-700">
-              <Bar ref={adminPerTechChartRef} data={barChartDataAdminPerTechnician} options={optionsAdmin} />
+
+            {/* Per Technician Stacked Chart */}
+            <div className="p-4 bg-white rounded-lg shadow">
+              <Bar
+                ref={adminPerTechChartRef}
+                data={barChartDataAdminPerTechnician}
+                options={{ ...stackedOptions, title: { display: true, text: "Daily Activity Duration per Technician" } }}
+              />
             </div>
           </div>
 
-          {/* Ranking Section */}
-          <div className="p-4 bg-white rounded-lg shadow text-gray-700 mt-6">
-           <h2 className="text-lg font-semibold mb-4">
-  <i className="fas fa-trophy mr-2"></i>
-  Completion Ranking (
-  {(() => {
-    const d = new Date(date);
-    return `${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}/${d.getFullYear()}`;
-  })()}
-  )
-</h2>
+          {/* Ranking */}
+          <div className="p-4 bg-white rounded-lg shadow mt-6">
+            <h2 className="text-lg font-semibold mb-4">
+              <i className="fas fa-trophy mr-2"></i>
+              Completion Ranking (
+              {(() => {
+                const d = new Date(date);
+                return `${(d.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}/${d.getFullYear()}`;
+              })()}
+              )
+            </h2>
 
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-center border border-gray-200">
@@ -214,13 +202,14 @@ const applyDateFilter = () => {
                   <tr>
                     <th className="py-2 px-4 border">Rank</th>
                     <th className="py-2 px-4 border">Technician</th>
-                    <th className="py-2 px-4 border">Avg Completion (mins)</th>
+                    <th className="py-2 px-4 border">Avg Completion</th>
                     <th className="py-2 px-4 border">Total Completed</th>
                     <th className="py-2 px-4 border">Date</th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {ranked && ranked.length > 0 ? (
+                  {ranked?.length > 0 ? (
                     ranked.map((tech, index) => (
                       <tr
                         key={index}
@@ -236,14 +225,15 @@ const applyDateFilter = () => {
                       >
                         <td className="py-2 px-4 border">{tech.rank}</td>
                         <td className="py-2 px-4 border">{tech.emp_name}</td>
-                        <td className="py-2 px-4 border">{parseFloat(tech.avg_completion_minutes).toFixed(2)}</td>
+                        <td className="py-2 px-4 border">
+                          {parseFloat(tech.avg_completion_minutes).toFixed(2)}
+                        </td>
                         <td className="py-2 px-4 border">{tech.total_completed}</td>
                         <td className="py-2 px-4 border">
-  {tech.activity_date
-    ? new Date(tech.activity_date).toLocaleDateString("en-US")
-    : ""}
-</td>
-
+                          {tech.activity_date
+                            ? new Date(tech.activity_date).toLocaleDateString("en-US")
+                            : ""}
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -259,20 +249,41 @@ const applyDateFilter = () => {
           </div>
         </div>
       ) : (
+        // USER SIDE
         <div>
           <p className="text-gray-600 mb-4">
             Welcome back, {emp_data?.emp_firstname}! Here are your activities.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <SummaryCard title="Total Activities" value={totalActivities} color="bg-cyan-200" />
-            <SummaryCard title="Completed" value={completedActivities} color="bg-sky-200" />
-            <SummaryCard title="Ongoing" value={ongoingActivities} color="bg-emerald-200" />
-            <SummaryCard title="Total Activities Today" value={totalActivitiesToday} color="bg-blue-200" />
+            <SummaryCard
+              title="Total Activities"
+              value={totalActivities}
+              color="bg-cyan-200"
+              icon={<FaClipboardList className="text-4xl animate-bounce" />}
+            />
+            <SummaryCard
+              title="Completed"
+              value={completedActivities}
+              color="bg-sky-200"
+              icon={<FaCheckCircle className="text-4xl animate-bounce" />}
+            />
+            <SummaryCard
+              title="Ongoing"
+              value={ongoingActivities}
+              color="bg-emerald-200"
+              icon={<FaSpinner className="text-4xl animate-spin" />}
+            />
+            <SummaryCard
+              title="Total Activities Today"
+              value={totalActivitiesToday}
+              color="bg-blue-200"
+              icon={<FaCalendarDay className="text-4xl animate-bounce" />}
+            />
           </div>
 
-          <div className="p-4 bg-white rounded-lg shadow text-gray-700">
-            <Bar data={barChartData} options={options} />
+          <div className="p-4 bg-white rounded-lg shadow">
+            <Bar data={barChartData} options={stackedOptions} />
           </div>
         </div>
       )}
@@ -280,10 +291,11 @@ const applyDateFilter = () => {
   );
 }
 
-// 🔹 Reusable Summary Card component
-function SummaryCard({ title, value, color }) {
+// 🔹 Summary Card Component
+function SummaryCard({ title, value, color, icon }) {
   return (
     <div className={`p-4 ${color} rounded-lg shadow text-gray-700`}>
+      <div>{icon}</div>
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="text-3xl font-bold flex justify-end">{value}</p>
     </div>

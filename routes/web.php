@@ -29,6 +29,15 @@ Route::get("/demo", [DemoController::class, 'index'])->name('demo');
 
 Route::get('/techact/tech-activity', [TechActivityController::class, 'index'])->name('tech.activity');
 
+Route::get('/techact/tech-activity-deleted', [TechActivityController::class, 'deletedActivity'])->name('tech.activity.deleted');
+
+Route::put('/activity/{id}/deleted-status', [TechActivityController::class, 'deletedStatus'])
+    ->name('activity.deleted-status');
+
+Route::put('/activity/{id}/restore-status', [TechActivityController::class, 'restoreStatus'])
+    ->name('activity.restore-status');
+
+
 Route::get('/techact/ongoing-activity', [OngoingActivityController::class, 'index'])->name('tech.ongoing');
 
 Route::get('/techact/doneActivity', [OngoingActivityController::class, 'doneActivities'])->name('tech.doneActivities');

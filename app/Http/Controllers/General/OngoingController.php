@@ -16,7 +16,7 @@ class OngoingController extends Controller
     public function index()
     {
         // Diretso kuha ng lahat ng data
-        $activities = DB::table('my_activity_list')
+        $activities = DB::connection('authify')->table('my_activity_list')
             ->orderByDesc('log_time')
             ->get();
 
@@ -44,7 +44,7 @@ class OngoingController extends Controller
             ? 'On Going'
             : 'For Approval';
 
-        DB::table('my_activity_list')->insert([
+        DB::connection('authify')->table('my_activity_list')->insert([
             'emp_id'      => $request->emp_id,
             'emp_name'    => $request->emp_name,
             'shift'       => $request->shift,
@@ -69,7 +69,7 @@ class OngoingController extends Controller
             'note'        => 'nullable|string',
         ]);
 
-        DB::table('my_activity_list')
+        DB::connection('authify')->table('my_activity_list')
             ->where('id', $id)
             ->update([
                 'my_activity' => $request->my_activity,
@@ -89,7 +89,7 @@ class OngoingController extends Controller
      */
     public function removeActivity($id)
     {
-        DB::table('my_activity_list')
+        DB::connection('authify')->table('my_activity_list')
             ->where('id', $id)
             ->delete();
 

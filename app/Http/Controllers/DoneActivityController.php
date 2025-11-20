@@ -33,7 +33,7 @@ class OngoingActivityController extends Controller
         // Handle datatable query na may filters
         $result = $this->datatable->handle(
             $request,
-            'server26', // connection
+            'authify', // connection
             'my_activity_list', // table
             [
                 'defaultSortBy' => 'emp_id',
@@ -165,7 +165,7 @@ class OngoingActivityController extends Controller
                 'status'      => 'required|string',
             ]);
 
-            DB::connection('server26')->table('my_activity_list')->insert([
+            DB::connection('authify')->table('my_activity_list')->insert([
                 'emp_id'      => $request->emp_id,
                 'emp_name'    => $request->emp_name,
                 'shift'       => $request->shift,
@@ -212,7 +212,7 @@ class OngoingActivityController extends Controller
                 break;
         }
 
-        DB::connection('server26')->table('my_activity_list')
+        DB::connection('authify')->table('my_activity_list')
             ->where('id', $id)
             ->update([
                 'my_activity'  => $request->my_activity,
