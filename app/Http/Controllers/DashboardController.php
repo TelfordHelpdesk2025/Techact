@@ -21,6 +21,20 @@ class DashboardController extends Controller
         $dayStart = $date->copy()->startOfDay()->format('Y-m-d H:i:s');
         $dayEnd   = $date->copy()->endOfDay()->format('Y-m-d H:i:s');
 
+        // 🔄 Auto-update "For Engineer Approval" → "Ongoing" after 24 hours
+        //         DB::connection('mysql')->table('my_activity_list')
+        //             ->where('status', 'like', 'for engineer approval%')
+        //             ->whereNotNull('time_out')
+        //             ->whereRaw("TIMESTAMPDIFF(
+        //     HOUR,
+        //     STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s'),
+        //     NOW()
+        // ) >= 24")
+
+        //             ->update([
+        //                 'status' => 'On-Going'
+        //             ]);
+
         // 🔹 Total counts technician
         $totalActivities = DB::connection('authify')->table('my_activity_list')
             ->where('emp_name', $empName)
@@ -33,13 +47,13 @@ class DashboardController extends Controller
 
         $ongoingActivities = DB::connection('authify')->table('my_activity_list')
             ->where('emp_name', $empName)
-            ->whereIn('status', ['ongoing', 'on going'])
+            ->whereIn('status', ['ongoing', 'on-going'])
             ->count();
 
         // 🔹 Total counts admin
         $totalActivitiesAdmin = DB::connection('authify')->table('my_activity_list')->count();
         $completedActivitiesAdmin = DB::connection('authify')->table('my_activity_list')->where('status', 'complete')->count();
-        $ongoingActivitiesAdmin = DB::connection('authify')->table('my_activity_list')->whereIn('status', ['ongoing', 'on going'])->count();
+        $ongoingActivitiesAdmin = DB::connection('authify')->table('my_activity_list')->whereIn('status', ['ongoing', 'on-going'])->count();
 
         // 🔹 Today's total counts
         $totalActivitiesTodayAdmin = DB::connection('authify')->table('my_activity_list')
@@ -61,13 +75,15 @@ class DashboardController extends Controller
             ->pluck('my_activity');
 
         // 🔹 Technician bar chart
-        $todayStatuses = ['complete', 'ongoing', 'on going'];
+        $todayStatuses = ['complete', 'ongoing', 'on-going', 'for engineer approval'];
         $datasets = [];
         $statusColors = [
-            'complete' => '#34D399', // green
-            'ongoing' => '#60A5FA',  // blue
-            'on going' => '#FBBF24', // yellow
+            'complete'  => '#34D399', // green
+            'ongoing'   => '#3B82F6', // mas matapang na blue
+            'on-going'  => '#60A5FA', // mas light na blue
+            'for engineer approval'  => '#422ad5', // mas light na blue
         ];
+
 
         foreach ($todayStatuses as $status) {
             $data = [];
@@ -140,12 +156,28 @@ class DashboardController extends Controller
                     'backgroundColor' => '#34D399',
                 ],
                 [
+                    'label' => 'On-going',
+                    'data' => array_map(fn($emp) => DB::connection('authify')->table('my_activity_list')
+                        ->where('emp_name', $emp)->where('status', 'on-going')
+                        ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
+                        ->count(), $myActivitiesTodayAdmin),
+                    'backgroundColor' => '#60A5FA',
+                ],
+                [
                     'label' => 'Ongoing',
                     'data' => array_map(fn($emp) => DB::connection('authify')->table('my_activity_list')
                         ->where('emp_name', $emp)->where('status', 'ongoing')
                         ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
                         ->count(), $myActivitiesTodayAdmin),
-                    'backgroundColor' => '#60A5FA',
+                    'backgroundColor' => '#3B82F6',
+                ],
+                [
+                    'label' => 'For Engineer Approval',
+                    'data' => array_map(fn($emp) => DB::connection('authify')->table('my_activity_list')
+                        ->where('emp_name', $emp)->where('status', 'for engineer approval')
+                        ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
+                        ->count(), $myActivitiesTodayAdmin),
+                    'backgroundColor' => '#422ad5',
                 ],
             ],
         ];
@@ -178,6 +210,8 @@ class DashboardController extends Controller
                 return $row;
             });
 
+        $userRank = $ranking->firstWhere('emp_name', $empName);
+
         return Inertia::render('Dashboard', [
             'emp_data' => $empData,
             'totalActivities' => $totalActivities,
@@ -193,6 +227,7 @@ class DashboardController extends Controller
             'barChartDataAdmin' => $barChartDataAdmin,
             'barChartDataAdminPerTechnician' => $barChartDataAdminPerTechnician,
             'ranked' => $ranking,
+            'userRank' => $userRank,
             'selectedDate' => $date->format('Y-m-d'),
         ]);
     }

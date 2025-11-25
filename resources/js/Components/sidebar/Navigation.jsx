@@ -65,7 +65,7 @@ export default function NavLinks() {
                     />
                     <SidebarLink
                         href={route("admin")}
-                        label="Administrators"
+                        label="Approver"
                         icon={<i className="fa-solid fa-user-shield"></i>}
                     />
                 </>

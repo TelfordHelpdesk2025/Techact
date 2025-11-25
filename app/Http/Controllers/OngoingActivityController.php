@@ -129,36 +129,6 @@ class OngoingActivityController extends Controller
         ]);
     }
 
-    // public function addActivity(Request $request)
-    // {
-    //     $request->validate([
-    //         'emp_id' => 'required|string',
-    //         'emp_name' => 'required|string',
-    //         'shift' => 'required|string',
-    //         'my_activity' => 'required|string',
-    //         'machine' => 'required|string',
-    //         'note' => 'nullable|string',
-    //     ]);
-
-    //     // status depende sa machine
-    //     $status = (!in_array(strtoupper($request->machine), ['N/A', 'NA']))
-    //         ? 'On Going'
-    //         : 'For Approval';
-
-    //     DB::table('my_activity_list')->insert([
-    //         'emp_id'      => $request->emp_id,
-    //         'emp_name'    => $request->emp_name,
-    //         'shift'       => $request->shift,
-    //         'my_activity' => $request->my_activity,
-    //         'machine'     => $request->machine,
-    //         'log_time'    => Carbon::now(),
-    //         'note'        => $request->note,
-    //         'status'      => $status,
-    //     ]);
-
-    //     return back()->with('success', 'Activity logged successfully.');
-    // }
-
     public function addActivity(Request $request)
     {
         try {
@@ -235,105 +205,7 @@ class OngoingActivityController extends Controller
         return back()->with('success', 'Activity updated successfully.');
     }
 
-    // public function forApproval(Request $request)
-    // {
-    //     // Default sort kung walang laman request
-    //     if (!$request->has('sortBy')) {
-    //         $request->merge(['sortBy' => 'id']);
-    //     }
-    //     if (!$request->has('sortDirection')) {
-    //         $request->merge(['sortDirection' => 'desc']);
-    //     }
 
-    //     $empId = session('emp_data')['emp_id'] ?? '';
-
-    //     // Handle datatable query na may filters
-    //     $result = $this->datatable->handle(
-    //         $request,
-    //         'mysql', // connection
-    //         'my_activity_list', // table
-    //         [
-    //             'defaultSortBy' => 'emp_id',
-    //             'defaultSortDirection' => 'desc',
-    //             'dateColumn' => 'log_time',
-    //             'searchColumns' => ['emp_id', 'emp_name', 'my_activity', 'status'],
-    //             'conditions' => function ($query) use ($request) {
-
-
-    //                 // Limit lang sa Ongoing-related activities
-    //                 $query->where(function ($q) {
-    //                     $q->where('status', 'like', 'for engineer approval%');
-    //                 });
-
-    //                 // Search using dropdown
-    //                 if ($request->filled('dropdownSearchValue') && $request->filled('dropdownFields')) {
-    //                     $value = $request->input('dropdownSearchValue');
-    //                     $fields = explode(',', $request->input('dropdownFields')); // comma-separated
-
-    //                     $query->where(function ($q) use ($fields, $value) {
-    //                         foreach ($fields as $field) {
-    //                             $q->orWhere($field, 'like', "%$value%");
-    //                         }
-    //                     });
-    //                 }
-
-    //                 return $query;
-    //             },
-    //             'filename' => 'activity_export',
-    //             'exportColumns' => [
-    //                 'emp_id',
-    //                 'emp_name',
-    //                 'shift',
-    //                 'my_activity',
-    //                 'machine',
-    //                 'log_time',
-    //                 'time_out',
-    //                 'duration',
-    //                 'status',
-    //                 'note'
-    //             ],
-    //         ]
-    //     );
-
-    //     if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
-    //         return $result;
-    //     }
-
-    //     // ✅ Get activity options from database
-    //     $activityOptions = DB::table('activity_list')
-    //         ->pluck('activity')
-    //         ->toArray();
-
-    //     $machineOptions = DB::table('machine_list')
-    //         ->whereNotNull('machine_num')       // exclude NULL
-    //         ->where('machine_num', '!=', '')    // exclude empty string
-    //         ->orderBy('machine_platform', 'asc') // order by machine_num
-    //         ->pluck('machine_num')
-    //         ->toArray();
-
-
-    //     // dd($activityOptions);
-
-    //     return Inertia::render('Tech/forApproval', [
-    //         'tableData' => $result['data'],
-    //         'activityOptions' => $activityOptions, // Pass to frontend
-    //         'machineOptions' => $machineOptions, // Pass to frontend
-    //         'tableFilters' => $request->only([
-    //             'search',
-    //             'perPage',
-    //             'sortBy',
-    //             'sortDirection',
-    //             'start',
-    //             'end',
-    //             'dropdownSearchValue',
-    //             'dropdownFields',
-    //         ]),
-    //         'empData' => [
-    //             'emp_id' => session('emp_data')['emp_id'] ?? null,
-    //             'emp_name' => session('emp_data')['emp_name'] ?? null,
-    //         ]
-    //     ]);
-    // }
 
     public function forApproval(Request $request)
     {
@@ -574,5 +446,57 @@ class OngoingActivityController extends Controller
             ]);
 
         return back()->with('success', 'Activity rejected successfully');
+    }
+
+    public function massApproval()
+    {
+        $empData = session('emp_data'); // or auth()->user()
+        $activities = DB::connection('authify')
+            ->table('my_activity_list')
+            ->where('status', 'For Engineer Approval')
+            ->get()
+            ->map(function ($item) {
+                return (array) $item;
+            });
+
+        return Inertia::render('Tech/MassApproval', [
+            'activities' => $activities, // ✅ ginawang activities
+            'empData' => $empData,
+        ]);
+    }
+
+
+    public function bulkApprove(Request $request)
+    {
+        // Validate input
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'approver_id' => 'required',
+            'approver_name' => 'required',
+            'approve_date' => 'nullable|date',
+        ]);
+
+        $ids = $request->ids;
+        $approve_date = $request->approve_date ?? now();
+
+        if (count($ids) === 0) {
+            return back()->with('error', 'No activities selected');
+        }
+
+        try {
+            DB::connection('authify')->table('my_activity_list')
+                ->whereIn('id', $ids)
+                ->update([
+                    'status' => 'Ongoing',
+                    'approver_id' => $request->approver_id,
+                    'approver_name' => $request->approver_name,
+                    'approve_date' => $approve_date,
+                    'remarks' => 'Approved',
+                ]);
+
+            return back()->with('success', 'Selected activities approved!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error approving selected activities: ' . $e->getMessage());
+        }
     }
 }

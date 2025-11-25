@@ -14,6 +14,13 @@ export default function NavBar() {
         )}&redirect=${encodeURIComponent(route("dashboard"))}`;
     };
 
+            const getGreeting = () => {
+            const hour = new Date().getHours();
+                if (hour < 12) return "Good morning";
+                if (hour < 18) return "Good afternoon";
+                return "Good evening";
+            };
+
     return (
         <nav className="">
             <div className="px-4 mx-auto sm:px-6 lg:px-8 bg-gray-500">
@@ -27,7 +34,7 @@ export default function NavBar() {
                             >
                                <i className="fa-regular fa-circle-user text-2xl"></i>
                                 <span className="mt-[3px]">
-                                    Welcome back, {emp_data?.emp_firstname}
+                                    Hello, {getGreeting()}, {emp_data?.emp_firstname}
                                 </span>
                                 <i className="fa-solid fa-caret-down text-2xl"></i>
                             </div>

@@ -121,7 +121,8 @@ export default function ActivityList({ tableData, tableFilters, empData }) {
                     </button>
                 </div>
 
-                <DataTable
+                <div className="p-6 overflow-x-auto">
+                    <DataTable
                     columns={[
                         { key: "activity", label: "Activity Name" },
                         { key: "description", label: "Description" },
@@ -142,7 +143,8 @@ export default function ActivityList({ tableData, tableFilters, empData }) {
                     filters={tableFilters}
                     rowKey="activity"
                     showExport={false}
-                />
+                    />
+                </div>
 
                 {/* MODAL */}
                 {isModalOpen && (

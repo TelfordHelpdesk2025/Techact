@@ -173,8 +173,19 @@ useEffect(() => {
       <Head title="For Approval Activities" />
       <div className="p-6">
        
+        <div className="flex justify-between items-center mb-3 p-4 bg-gradient-to-r from-gray-600 to-black rounded-t-2xl text-white">
+  <h1 className="text-2xl font-bold">For Approval Activities</h1>
 
-        <h1 className="text-2xl font-bold mb-4">For Approval Activities</h1>
+  <button
+  className="px-4 py-2 bg-green-600 rounded hover:bg-green-700 flex items-center"
+  onClick={() => router.get(route("tech.forApproval.mass"))} // SPA navigation
+>
+  <i className="fa-solid fa-list-check mr-2"></i> Multiple Approved
+</button>
+
+</div>
+
+        
         <DataTable
           columns={[
             { key: "emp_name", label: "Technician" },

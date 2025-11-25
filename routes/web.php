@@ -80,6 +80,11 @@ Route::get('/activity/export', [ActivityController::class, 'indexExport'])
 Route::get('/export/activities', [ActivityController::class, 'getActivityData'])
     ->name('api.export.activities');
 
+Route::get('/tech/forApproval/mass', [OngoingActivityController::class, 'massApproval'])
+    ->name('tech.forApproval.mass');
+
+Route::put('/tech/forApproval/mass/approve', [OngoingActivityController::class, 'bulkApprove']);
+
 
 
 // fallback

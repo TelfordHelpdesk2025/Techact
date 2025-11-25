@@ -131,7 +131,7 @@ export default function Activity({ tableData, tableFilters }) {
       <Head title="All Activities" />
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">All Activities</h1>
-
+      <div className="p-6 overflow-x-auto">
         <DataTable
           columns={[
             { key: "emp_name", label: "Technician" },
@@ -161,7 +161,7 @@ export default function Activity({ tableData, tableFilters }) {
           // sortBy="emp_name"
           // sortOrder="desc"
         />
-
+      </div>
         {/* Modal */}
        {modalOpen && selectedActivity && (
   <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-55">
