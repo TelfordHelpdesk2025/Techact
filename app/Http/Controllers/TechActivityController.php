@@ -27,12 +27,10 @@ class TechActivityController extends Controller
             'my_activity_list',
             [
                 'conditions' => function ($query) {
-                    return $query->where(function ($q) {
-                        $q->whereNot('item_status', 'Deleted')
-                            ->orWhereNull('item_status')
-                            ->orWhere('item_status', '');
-                    })->orderBy('log_time', 'desc');
+                    return $query
+                        ->OrderBy('log_time', 'asc');
                 },
+
                 'searchColumns' => ['emp_name', 'shift', 'my_activity', 'machine', 'log_time', 'time_out', 'status', 'note'],
             ]
         );

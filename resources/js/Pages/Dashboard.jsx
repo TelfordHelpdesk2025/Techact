@@ -116,11 +116,27 @@ export default function Dashboard({
 
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+           
             <SummaryCard
               title="Total Activities"
               value={totalActivitiesAdmin}
               color="bg-cyan-200"
               icon={<FaClipboardList className="text-4xl animate-bounce" />}
+              onClick={() => router.visit(route("tech.activity"))}
+            />
+
+             <SummaryCard
+              title="Total For Approval"
+              value={totalApprovalAdmin}
+              color="bg-blue-400"
+              icon={<FaClipboardCheck className="text-4xl animate-bounce" />}
+              onClick={() => router.visit(route("tech.forApproval"))}
+            />
+            <SummaryCard
+              title="Total Activities Today"
+              value={totalActivitiesTodayAdmin}
+              color="bg-blue-200"
+              icon={<FaCalendarDay className="text-4xl animate-bounce" />}
             />
             <SummaryCard
               title="Completed"
@@ -134,18 +150,8 @@ export default function Dashboard({
               color="bg-emerald-200"
               icon={<FaSpinner className="text-4xl animate-spin" />}
             />
-            <SummaryCard
-              title="Total Activities Today"
-              value={totalActivitiesTodayAdmin}
-              color="bg-blue-200"
-              icon={<FaCalendarDay className="text-4xl animate-bounce" />}
-            />
-            <SummaryCard
-              title="Total For Approval"
-              value={totalApprovalAdmin}
-              color="bg-blue-400"
-              icon={<FaClipboardCheck className="text-4xl animate-bounce" />}
-            />
+            
+            
           </div>
 
           {/* Date Filter */}
@@ -292,12 +298,18 @@ export default function Dashboard({
 }
 
 // 🔹 Summary Card Component
-function SummaryCard({ title, value, color, icon }) {
+function SummaryCard({ title, value, color, icon, onClick }) {
   return (
+    <div
+      onClick={onClick}
+      className={`${color} cursor-pointer rounded-xl p-5 shadow-md
+        hover:shadow-lg hover:scale-[1.02] transition-all duration-200`}
+    >
     <div className={`p-4 ${color} rounded-lg shadow text-gray-700`}>
       <div>{icon}</div>
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="text-3xl font-bold flex justify-end">{value}</p>
+    </div>
     </div>
   );
 }

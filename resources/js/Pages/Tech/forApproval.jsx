@@ -4,21 +4,99 @@ import { Head, usePage } from "@inertiajs/react"; // ✅ dagdag usePage para sa 
 import DataTable from "@/Components/DataTable";
 import { router } from "@inertiajs/react";
 import toast from "react-hot-toast";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
+// function calculateDuration(row) {
+//   const { time_out, approve_date } = row;
 
+//   if (!time_out) return "-";
 
-function calculateDuration(row) {
-  const { log_time, time_out, status } = row;
-  const start = new Date(log_time);
-  const end = status === "Complete" && time_out ? new Date(time_out) : new Date();
-  if (isNaN(start) || isNaN(end)) return "-";
+//   // Start = time_out
+//   const start = new Date(time_out);
+
+//   // End = approve_date OR current time
+//   const end = approve_date
+//     ? new Date(approve_date)
+//     : new Date();
+
+//   if (isNaN(start.getTime()) || isNaN(end.getTime())) return "-";
+
+//   const diffMs = end - start;
+//   if (diffMs < 0) return "-";
+
+//   const diffMinutes = Math.floor(diffMs / 60000);
+
+//   if (diffMinutes >= 60) {
+//     const hrs = Math.floor(diffMinutes / 60);
+//     const mins = diffMinutes % 60;
+//     return `${hrs} hr${hrs > 1 ? "s" : ""} ${mins} min`;
+//   }
+
+//   if (diffMinutes > 0) return `${diffMinutes} min`;
+
+//   return `${Math.floor(diffMs / 1000)} secs`;
+// }
+
+function formatDuration(start, end) {
   const diffMs = end - start;
   if (diffMs < 0) return "-";
-  const diffMinutes = Math.floor(diffMs / 60000);
-  if (diffMinutes > 0) return `${diffMinutes} min`;
-  const diffSeconds = Math.floor(diffMs / 1000);
-  return `${diffSeconds} secs`;
+
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const hrs = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  if (hrs > 0) return `${hrs}h ${mins}m`;
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
 }
+
+function useRunningDuration(row) {
+  const { time_out, approve_date } = row;
+  const [duration, setDuration] = useState("-");
+
+  useEffect(() => {
+    if (!time_out) {
+      setDuration("-");
+      return;
+    }
+
+    const start = new Date(time_out);
+
+    const update = () => {
+      const end = approve_date
+        ? new Date(approve_date)
+        : new Date();
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        setDuration("-");
+        return;
+      }
+
+      setDuration(formatDuration(start, end));
+    };
+
+    update(); // initial run
+
+    // Run every second ONLY if not approved yet
+    if (!approve_date) {
+      const interval = setInterval(update, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [time_out, approve_date]);
+
+  return duration;
+}
+
+function DurationCell({ row }) {
+  const duration = useRunningDuration(row);
+  return <span className="font-mono">{duration}</span>;
+}
+
+
+
+
 
 function getShiftBadge(row) {
   let shift = row.shift || "";
@@ -64,6 +142,7 @@ export default function Activity({
   tableFilters,
   auth,
   empData,
+  children,
 }) {
 
   
@@ -137,36 +216,42 @@ useEffect(() => {
   );
 
   const dataWithBadgesAndDuration = filteredData.map((row, index) => {
-    const enhancedRow = {
-      ...row,
-      i: index + 1,
-      duration: calculateDuration(row),
-      shift: getShiftBadge(row),
-      shiftText: row.shift || "", // plain text for modal
-      status: getStatusBadge(row.status),
-      statusText: row.status || "Unknown", // plain text for modal
-    };
+  const enhancedRow = {
+    ...row,
+    i: index + 1,
 
-    return {
-      ...enhancedRow,
-      viewDetails:
-      // enhancedRow.statusText === "for engineer approval" ? null : (
-      (
-        <button
-          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-          onClick={() => {
-            setSelectedActivity(enhancedRow); // ✅ now passing enhanced row
-            setModalOpen(true);
-          }}
-        >
-          <div className="flex items-center">
-            <i className="fa-regular fa-eye mr-1"></i>
-            View
-          </div>
-        </button>
-      ),
-    };
-  });
+    // ✅ LIVE running duration
+    duration: <DurationCell row={row} />,
+
+    shift: getShiftBadge(row),
+    shiftText: row.shift || "",
+    status: getStatusBadge(row.status),
+    statusText: row.status || "Unknown",
+  };
+
+ 
+
+  return {
+
+    
+    ...enhancedRow,
+    viewDetails: (
+      <button
+        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+        onClick={() => {
+          setSelectedActivity(enhancedRow);
+          setModalOpen(true);
+        }}
+      >
+        <div className="flex items-center">
+          <i className="fa-regular fa-eye mr-1"></i>
+          View
+        </div>
+      </button>
+    ),
+  };
+});
+
 
   return (
     <AuthenticatedLayout>
@@ -192,8 +277,7 @@ useEffect(() => {
             { key: "shift", label: "Shift" },
             { key: "my_activity", label: "Activity" },
             { key: "machine", label: "Machine" },
-            { key: "log_time", label: "Date Log" },
-            // { key: "time_out", label: "Done Date" },
+            { key: "time_out", label: "Date Done" },
             { key: "duration", label: "Time Duration" },
             { key: "status", label: "Status" },
             { key: "note", label: "Comment" },
@@ -307,49 +391,69 @@ useEffect(() => {
           </button>
 
           <div className="flex gap-2">
+ <>
+      {children}
 
+      {/* REQUIRED FOR TOASTS */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
+    </>
             {/* REJECT BUTTON */}
-            <button
-              type="button"
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded flex items-center"
-              onClick={() => {
-                if (!form.remarks?.trim()) {
-                  return toast.error("Remarks are required before rejecting.");
-                }
+<button
+  type="button"
+  disabled={!form.remarks?.trim()}
+  title={!form.remarks?.trim() ? "Remarks are required to reject" : ""}
+  className={`px-4 py-2 rounded flex items-center
+    ${
+      !form.remarks?.trim()
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-red-600 hover:bg-red-700 text-white"
+    }
+  `}
+  onClick={() => {
+    if (!form.remarks || !form.remarks.trim()) {
+      toast.error("Remarks are required before rejecting.");
+      return;
+    }
 
-                router.put(
-                  `/techact/forApproval/reject/${selectedActivity.id}`,
-                  {
-                    rejector_id: form.emp_id,
-                    rejector_name: form.emp_name,
-                    rejected_date: new Date().toLocaleString("en-US", {
-                      month: "short",
-                      day: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    }),
-                    remarks: form.remarks,
-                  },
-                  {
-                    onSuccess: () => {
-                      toast.success("Activity rejected successfully!");
-                      alert("✅ Activity rejected successfully!");
-                      setModalOpen(false);
-                      setSelectedActivity(null);
-                      window.location.reload();
-                    },
-                    onError: () => {
-                      toast.error("Failed to reject activity.");
-                    }
-                  }
-                );
-              }}
-            >
-              <i className="fa-solid fa-ban mr-1"></i>
-              Reject
-            </button>
+    router.put(
+      `/techact/forApproval/reject/${selectedActivity.id}`,
+      {
+        rejector_id: form.emp_id,
+        rejector_name: form.emp_name,
+        rejected_date: new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+        remarks: form.remarks.trim(),
+      },
+      {
+        onSuccess: () => {
+          toast.success("Activity rejected successfully!");
+          setModalOpen(false);
+          setSelectedActivity(null);
+        },
+        onError: () => {
+          toast.error("Failed to reject activity.");
+        },
+      }
+    );
+  }}
+>
+  <i className="fa-solid fa-ban mr-1"></i>
+  Reject
+</button>
+
 
             {/* APPROVE BUTTON - NOW SAFE */}
             <button

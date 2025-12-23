@@ -24,6 +24,7 @@ export default function NavLinks() {
                     icon={<i className="fa-solid fa-list-check"></i>}
                     links={[
                         { href: route("tech.ongoing"), label: "Ongoing" },
+                        // { href: route("maintenance"), label: "Ongoing" },
                         { href: route("tech.doneActivities"), label: "Activity Done" },
                     ]}
                 />
@@ -70,6 +71,18 @@ export default function NavLinks() {
                     />
                 </>
             )}
+
+            {/* {["1678"].includes(emp_data?.emp_id) && (
+                <>
+
+                    <SidebarLink
+                        href={route("tech.forApproval")}
+                        label="For Approval"
+                        icon={<i className="fa-solid fa-thumbs-up"></i>}
+                        notifications={ApprovalCount}
+                    />
+                </>
+            )} */}
         </nav>
     );
 }

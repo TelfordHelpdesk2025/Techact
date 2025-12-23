@@ -338,7 +338,7 @@ class OngoingActivityController extends Controller
                 $status = "For Engineer Approval";
                 break;
             case "For Engineer Approval":
-                $status = "Ongoing"; // 🔄 cycle balik
+                $status = "Complete"; // 🔄 cycle balik
                 break;
         }
 
@@ -434,13 +434,21 @@ class OngoingActivityController extends Controller
 
     public function reject(Request $request, $id)
     {
+
+        $request->validate([
+            'remarks' => 'required|string|min:5',
+        ], [
+            'remarks.required' => 'Remarks are required when rejecting.',
+            'remarks.min' => 'Remarks must be at least 5 characters.',
+        ]);
+
         DB::connection('authify')->table('my_activity_list')
             ->where('id', $id)
             ->update([
                 'rejector_id'   => $request->rejector_id,
                 'rejector_name' => $request->rejector_name,
                 'rejected_date' => $request->rejected_date,
-                'remarks'       => $request->remarks,
+                'reject_remarks'       => $request->remarks,
                 'status'        => 'Rejected',
                 // 'time_out'      => Carbon::now()->format('M/d/Y H:i:s'), // → Nov/17/2025 15:13:49
             ]);
@@ -487,7 +495,7 @@ class OngoingActivityController extends Controller
             DB::connection('authify')->table('my_activity_list')
                 ->whereIn('id', $ids)
                 ->update([
-                    'status' => 'Ongoing',
+                    'status' => 'Complete',
                     'approver_id' => $request->approver_id,
                     'approver_name' => $request->approver_name,
                     'approve_date' => $approve_date,

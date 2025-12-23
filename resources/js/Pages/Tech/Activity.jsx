@@ -3,6 +3,28 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router } from "@inertiajs/react";
 import DataTable from "@/Components/DataTable";
 
+function formatDurationBetween(startStr, endStr) {
+  if (!startStr) return "-";
+
+  const start = new Date(startStr);
+  const end = endStr ? new Date(endStr) : new Date();
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return "-";
+
+  const diffMs = end - start;
+  if (diffMs < 0) return "-";
+
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const hrs = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  if (hrs > 0) return `${hrs}h ${mins}m`;
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
+}
+
+
 function calculateDuration(row) {
   const { log_time, time_out, status } = row;
 
@@ -130,7 +152,7 @@ export default function Activity({ tableData, tableFilters }) {
     <AuthenticatedLayout>
       <Head title="All Activities" />
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">All Activities</h1>
+        <h1 className="text-2xl font-bold mb-4 animate-pulse"><i className="fa-solid fa-list mr-2"></i>All Activities</h1>
       <div className="p-6 overflow-x-auto">
         <DataTable
           columns={[
@@ -189,6 +211,15 @@ export default function Activity({ tableData, tableFilters }) {
           ["Approver", selectedActivity.approver_name],
           ["Approved Date", selectedActivity.approve_date],
           ["Remarks", selectedActivity.remarks],
+        [
+  "Approval Duration Time",
+  formatDurationBetween(
+    selectedActivity.time_out,
+    selectedActivity.approve_date
+  )
+],
+
+
         ]
       : []),
     // Conditional Rejector
@@ -196,8 +227,16 @@ export default function Activity({ tableData, tableFilters }) {
       ? [
           ["Rejector", selectedActivity.rejector_name],
           ["Rejected Date", selectedActivity.rejected_date],
-          ["Remarks", selectedActivity.remarks],
+          ["Remarks", selectedActivity.reject_remarks],
+          [
+  "Approval Duration Time",
+  formatDurationBetween(
+    selectedActivity.time_out,
+    selectedActivity.rejected_date
+  )
+],
         ]
+        
       : []),
   ].map(([label, value], idx) => (
     <div key={idx} className="border-b border-gray-700 pb-2">

@@ -9,6 +9,9 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+
+
+
     public function index(Request $request)
     {
         $empData = session('emp_data');
@@ -22,18 +25,20 @@ class DashboardController extends Controller
         $dayEnd   = $date->copy()->endOfDay()->format('Y-m-d H:i:s');
 
         // 🔄 Auto-update "For Engineer Approval" → "Ongoing" after 24 hours
-        //         DB::connection('mysql')->table('my_activity_list')
-        //             ->where('status', 'like', 'for engineer approval%')
-        //             ->whereNotNull('time_out')
-        //             ->whereRaw("TIMESTAMPDIFF(
+        // DB::connection('authify')->table('my_activity_list')
+        //     ->where('status', 'like', 'for engineer approval%')
+        //     ->whereNotNull('log_time')
+        //     ->whereRaw("TIMESTAMPDIFF(
         //     HOUR,
-        //     STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s'),
+        //     STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s'),
         //     NOW()
-        // ) >= 24")
+        // ) >= 12")
 
-        //             ->update([
-        //                 'status' => 'On-Going'
-        //             ]);
+        //     ->update([
+        //         'status' => 'On-Going'
+        //     ]);
+        /////////---end of auto-update
+
 
         // 🔹 Total counts technician
         $totalActivities = DB::connection('authify')->table('my_activity_list')

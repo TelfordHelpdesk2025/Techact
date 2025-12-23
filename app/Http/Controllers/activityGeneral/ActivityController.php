@@ -81,4 +81,10 @@ class ActivityController extends Controller
             'emp_data' => $request->session()->get('emp_data'),
         ]);
     }
+
+    public function destroy($id)
+    {
+        DB::connection('server26')->table('activity_list')->where('id', $id)->delete();
+        return back()->with('success', 'Activity deleted successfully!');
+    }
 }

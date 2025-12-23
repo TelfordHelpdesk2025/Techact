@@ -147,60 +147,77 @@ export default function ActivityList({ tableData, tableFilters, empData }) {
                 </div>
 
                 {/* MODAL */}
-                {isModalOpen && (
-                    <Modal
-                        id="AddEditActivityModal"
-                        title={editMode ? "Edit Activity" : "Add New Activity"}
-                        show={true}
-                        onClose={() => setIsModalOpen(false)}
-                        className="w-[400px] max-w-none"
-                    >
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Activity Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={activityName}
-                                    onChange={(e) => setActivityName(e.target.value)}
-                                    placeholder="Enter activity name"
-                                    className="input input-bordered w-full"
-                                />
-                            </div>
+{isModalOpen && (
+    <Modal
+        id="AddEditActivityModal"
+        title={
+            <div className="flex items-center gap-2 text-lg font-semibold">
+                <i className={`fa-solid ${editMode ? "fa-pen-to-square" : "fa-plus"} text-blue-600`}></i>
+                {editMode ? "Edit Activity" : "Add New Activity"}
+            </div>
+        }
+        show={true}
+        onClose={() => setIsModalOpen(false)}
+        className="w-[450px] max-w-none"
+    >
+        <div className="space-y-5 p-1">
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Description
-                                </label>
-                                <textarea
-                                    value={activityDesc}
-                                    onChange={(e) => setActivityDesc(e.target.value)}
-                                    placeholder="Enter description"
-                                    rows="3"
-                                    className="textarea textarea-bordered w-full"
-                                ></textarea>
-                            </div>
+            {/* Activity Name */}
+            <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    <i className="fa-solid fa-tag mr-1 text-blue-500"></i> Activity Name
+                </label>
+                <div className="relative">
+                    <i className="fa-solid fa-pen text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input
+                        type="text"
+                        value={activityName}
+                        onChange={(e) => setActivityName(e.target.value)}
+                        placeholder="Enter activity name"
+                        className="input input-bordered w-full pl-10 rounded-md focus:ring-2 focus:ring-blue-400"
+                    />
+                </div>
+            </div>
 
-                            <div className="flex justify-end mt-5">
-                                <button
-                                    className="btn bg-gray-500 hover:bg-gray-600 text-white mr-2"
-                                    onClick={() => setIsModalOpen(false)}
-                                >
-                                    <i className="fa-solid fa-xmark mr-1"></i>
-                                    Cancel
-                                </button>
-                                <button
-                                    className="btn bg-green-600 hover:bg-green-700 text-white"
-                                    onClick={saveActivity}
-                                >
-                                    <i className="fa-solid fa-floppy-disk mr-1"></i>
-                                    {editMode ? "Update" : "Save"}
-                                </button>
-                            </div>
-                        </div>
-                    </Modal>
-                )}
+            {/* Description */}
+            <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    <i className="fa-solid fa-align-left mr-1 text-blue-500"></i> Description
+                </label>
+                <div className="relative">
+                    <i className="fa-solid fa-note-sticky text-gray-400 absolute left-3 top-3"></i>
+                    <textarea
+                        value={activityDesc}
+                        onChange={(e) => setActivityDesc(e.target.value)}
+                        placeholder="Enter description"
+                        rows="3"
+                        className="textarea textarea-bordered w-full pl-10 rounded-md focus:ring-2 focus:ring-blue-400"
+                    ></textarea>
+                </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex justify-end mt-4 gap-2 pt-3 border-t">
+                <button
+                    className="btn bg-gray-500 hover:bg-gray-600 text-white px-4"
+                    onClick={() => setIsModalOpen(false)}
+                >
+                    <i className="fa-solid fa-xmark mr-1"></i>
+                    Cancel
+                </button>
+
+                <button
+                    className="btn bg-green-600 hover:bg-green-700 text-white px-4"
+                    onClick={saveActivity}
+                >
+                    <i className="fa-solid fa-floppy-disk mr-1"></i>
+                    {editMode ? "Update" : "Save"}
+                </button>
+            </div>
+        </div>
+    </Modal>
+)}
+
             </div>
         </AuthenticatedLayout>
     );
