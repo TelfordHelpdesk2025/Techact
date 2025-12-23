@@ -24,13 +24,12 @@ export default function Profile({ profile, errors }) {
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    const token = localStorage.getItem("authify-token");
-                    localStorage.removeItem("authify-token");
-                    router.get(route("logout"));
-                    // window.location.href = `http://192.168.2.221/authify/public/logout?key=${encodeURIComponent(
-                    window.location.href = `http://192.168.3.201/authify/public/login?redirect=${encodeURIComponent(
-                        token
-                    )}&redirect=${encodeURIComponent(route("dashboard"))}`;
+                    // Session-based logout
+                    router.get(route("logout"), {}, {
+                        onFinish: () => {
+                            window.location.href = route("login");
+                        },
+                    });
                 },
             }
         );
@@ -40,29 +39,22 @@ export default function Profile({ profile, errors }) {
         <AuthenticatedLayout>
             <Head title="Profile" />
 
-            <div className="max-w-3xl p-6 mx-auto border-[1px] rounded-2xl">
-                <h1 className="pb-2 mb-6 text-2xl font-bold border-b">
+            <div className="max-w-3xl mx-auto mt-6 bg-gradient-to-br from-cyan-50 to-blue-50 p-6 rounded-2xl shadow-lg border border-gray-200">
+                <h1 className="pb-3 mb-6 text-3xl font-bold text-gray-800 border-b-2 border-blue-200 flex items-center gap-2">
+                    <i className="fas fa-user-circle text-blue-500 text-4xl"></i>
                     User Profile
                 </h1>
 
                 {profile && (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <ProfileField label="Name" value={profile.EMPNAME} />
-                        <ProfileField
-                            label="Position"
-                            value={profile.JOB_TITLE}
-                        />
-                        <ProfileField
-                            label="Department"
-                            value={profile.DEPARTMENT}
-                        />
-                        <ProfileField
-                            label="Production Line"
-                            value={profile.PRODLINE}
-                        />
+                        <ProfileField label="Position" value={profile.JOB_TITLE} />
+                        <ProfileField label="Department" value={profile.DEPARTMENT} />
+                        <ProfileField label="Production Line" value={profile.PRODLINE} />
                         <ProfileField label="Station" value={profile.STATION} />
                         <ProfileField label="Email" value={profile.EMAIL} />
-                        <div className="flex items-end gap-2">
+
+                        <div className="flex items-end gap-2 mt-2">
                             <ProfileField
                                 label="Password"
                                 value={[...Array(profile.PASSWRD?.length || 8)]
@@ -70,8 +62,12 @@ export default function Profile({ profile, errors }) {
                                     .join("")}
                             />
                             <button
-                                className="border-blue-500 btn btn-sm border-[1px]"
                                 onClick={() => setPasswordForm(!passwordForm)}
+                                className={`px-4 py-2 rounded-md text-sm font-semibold border transition-all duration-200 ${
+                                    passwordForm
+                                        ? "border-red-400 text-red-500 hover:bg-red-100"
+                                        : "border-blue-400 text-blue-600 hover:bg-blue-100"
+                                }`}
                             >
                                 {passwordForm ? "Cancel" : "Change Password"}
                             </button>
@@ -79,127 +75,99 @@ export default function Profile({ profile, errors }) {
                     </div>
                 )}
 
-                {/* Password Form - Toggled */}
-                <div className={passwordForm ? "block mt-6" : "hidden"}>
-                    <div className="p-4 space-y-4 border border-yellow-400 rounded-xl">
+                {/* Password Change Section */}
+                <div
+                    className={`transition-all duration-500 ${
+                        passwordForm ? "opacity-100 mt-8" : "opacity-0 h-0 overflow-hidden"
+                    }`}
+                >
+                    <div className="p-5 space-y-5 bg-white rounded-xl border border-yellow-300 shadow-sm">
                         <div
                             role="alert"
-                            className="text-sm alert alert-warning"
+                            className="flex items-center gap-3 text-sm text-yellow-700 bg-yellow-100 px-3 py-2 rounded-md"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-6 h-6 stroke-current shrink-0"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                                />
-                            </svg>
+                            <i className="fas fa-exclamation-triangle text-yellow-500 text-lg"></i>
                             <span>
-                                Changing your password will log you out of all
-                                systems using Authify.
+                                Changing your password will log you out of all systems using
+                                <strong> Authify</strong>.
                             </span>
                         </div>
 
-                        <div>
-                            <InputLabel
-                                htmlFor="old-password"
-                                value="Old Password"
-                            />
-                            <TextInput
-                                id="old-password"
-                                type="password"
-                                name="old-password"
-                                value={password.current_password}
-                                className="block w-full mt-1"
-                                onChange={(e) =>
-                                    setPassword({
-                                        ...password,
-                                        current_password: e.target.value,
-                                    })
-                                }
-                            />
-                            <InputError
-                                message={errors.current_password}
-                                className="mt-1"
-                            />
-                        </div>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <InputLabel htmlFor="old-password" value="Old Password" />
+                                <TextInput
+                                    id="old-password"
+                                    type="password"
+                                    value={password.current_password}
+                                    className="block w-full mt-1"
+                                    onChange={(e) =>
+                                        setPassword({
+                                            ...password,
+                                            current_password: e.target.value,
+                                        })
+                                    }
+                                />
+                                <InputError
+                                    message={errors.current_password}
+                                    className="mt-1"
+                                />
+                            </div>
 
-                        <div>
-                            <InputLabel
-                                htmlFor="new-password"
-                                value="New Password"
-                            />
-                            <TextInput
-                                id="new-password"
-                                type="password"
-                                name="new-password"
-                                value={password.new_password}
-                                className="block w-full mt-1"
-                                onChange={(e) =>
-                                    setPassword({
-                                        ...password,
-                                        new_password: e.target.value,
-                                    })
-                                }
-                            />
-                            <InputError
-                                message={errors.new_password}
-                                className="mt-1"
-                            />
-                        </div>
+                            <div>
+                                <InputLabel htmlFor="new-password" value="New Password" />
+                                <TextInput
+                                    id="new-password"
+                                    type="password"
+                                    value={password.new_password}
+                                    className="block w-full mt-1"
+                                    onChange={(e) =>
+                                        setPassword({
+                                            ...password,
+                                            new_password: e.target.value,
+                                        })
+                                    }
+                                />
+                                <InputError
+                                    message={errors.new_password}
+                                    className="mt-1"
+                                />
+                            </div>
 
-                        <div>
-                            <InputLabel
-                                htmlFor="confirm-new-password"
-                                value="Confirm New Password"
-                            />
-                            <TextInput
-                                id="confirm-new-password"
-                                type="password"
-                                name="confirm-new-password"
-                                value={password.new_password_confirmation}
-                                className="block w-full mt-1"
-                                onChange={(e) =>
-                                    setPassword({
-                                        ...password,
-                                        new_password_confirmation:
-                                            e.target.value,
-                                    })
-                                }
-                            />
-                            <InputError
-                                message={errors.new_password_confirmation}
-                                className="mt-1"
-                            />
+                            <div className="md:col-span-2">
+                                <InputLabel
+                                    htmlFor="confirm-new-password"
+                                    value="Confirm New Password"
+                                />
+                                <TextInput
+                                    id="confirm-new-password"
+                                    type="password"
+                                    value={password.new_password_confirmation}
+                                    className="block w-full mt-1"
+                                    onChange={(e) =>
+                                        setPassword({
+                                            ...password,
+                                            new_password_confirmation: e.target.value,
+                                        })
+                                    }
+                                />
+                                <InputError
+                                    message={errors.new_password_confirmation}
+                                    className="mt-1"
+                                />
+                            </div>
                         </div>
 
                         <button
-                            className="w-full mt-2 btn btn-primary"
+                            className="w-full py-2 mt-2 font-semibold text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-all"
                             onClick={handleChangePassword}
                         >
-                            Change Password
+                            <i className="fas fa-key mr-2"></i>Change Password
                         </button>
 
                         {successMessage && (
-                            <div className="mt-2 text-white alert alert-success">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="w-6 h-6 stroke-current shrink-0"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
+                            <div className="flex items-center gap-2 p-3 mt-3 text-green-800 bg-green-100 rounded-md">
+                                <i className="fas fa-check-circle text-green-600"></i>
                                 <span>{successMessage}</span>
                             </div>
                         )}
@@ -213,10 +181,10 @@ export default function Profile({ profile, errors }) {
 function ProfileField({ label, value }) {
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-500">
-                {label}
-            </label>
-            <p className="mt-1 font-semibold">{value}</p>
+            <label className="block text-sm font-medium text-gray-500">{label}</label>
+            <p className="mt-1 text-gray-800 font-semibold bg-white/70 px-3 py-2 rounded-md border border-gray-200 shadow-sm">
+                {value || "—"}
+            </p>
         </div>
     );
 }

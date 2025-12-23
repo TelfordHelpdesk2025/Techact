@@ -48,7 +48,7 @@ export default function Activity({ tableData, tableFilters, emp_data }) {
                 <h1 className="text-2xl font-bold">Activityistrators</h1>
 
                 {["superActivity", "Activity"].includes(
-                    emp_data?.emp_system_role
+                    emp_data?.emp_role
                 ) && (
                     <button
                         className="text-blue-600 border-blue-600 btn"
@@ -107,7 +107,7 @@ export default function Activity({ tableData, tableFilters, emp_data }) {
                             <strong>Role:</strong> {row.emp_role}
                         </p>
                         {["superActivity", "Activity"].includes(
-                            emp_data?.emp_system_role
+                            emp_data?.emp_role
                         ) && (
                             <div>
                                 <select

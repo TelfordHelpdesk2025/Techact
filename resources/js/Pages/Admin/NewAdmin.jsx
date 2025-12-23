@@ -105,7 +105,7 @@ export default function NewAdmin({ tableData, tableFilters, emp_data }) {
                                     className="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm p-2"
                                 >
                                     <option value="">-- Select Role --</option>
-                                    {emp_data?.emp_system_role === "superadmin" && (
+                                    {emp_data?.emp_role === "superadmin" && (
                                         <option value="superadmin">Superadmin</option>
                                     )}
                                     <option value="admin">Admin</option>

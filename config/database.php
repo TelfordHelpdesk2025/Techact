@@ -2,78 +2,74 @@
 
 use Illuminate\Support\Str;
 
-/*
-|--------------------------------------------------------------------------
-| Helper functions
-|--------------------------------------------------------------------------
-|
-| These helpers determine the database host, username, and password
-| based on the server IP.
-|
-*/
-
-if (!function_exists('getDbHost')) {
-    function getDbHost(array $hosts)
-    {
-        $ip = gethostbyname(gethostname());
-        if (str_starts_with($ip, '172')) return $hosts['172'] ?? '127.0.0.1';
-        if (str_starts_with($ip, '192')) return $hosts['192'] ?? '127.0.0.1';
-        return $hosts['local'] ?? '127.0.0.1';
-    }
-}
-
-if (!function_exists('getDbCredential')) {
-    function getDbCredential(array $usernames, array $passwords)
-    {
-        $ip = gethostbyname(gethostname());
-        if (str_starts_with($ip, '172')) return [$usernames['172'], $passwords['172']];
-        if (str_starts_with($ip, '192')) return [$usernames['192'], $passwords['192']];
-        return [$usernames['local'], $passwords['local']];
-    }
-}
-
-/*
-|--------------------------------------------------------------------------
-| Database configuration
-|--------------------------------------------------------------------------
-*/
 return [
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    /*
+    |--------------------------------------------------------------------------
+    | Default Database Connection Name
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify which of the database connections below you wish
+    | to use as your default connection for database operations. This is
+    | the connection which will be utilized unless another connection
+    | is explicitly specified when you execute a query / statement.
+    |
+    */
 
+    'default' => env('DB_CONNECTION', 'sqlite'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Connections
+    |--------------------------------------------------------------------------
+    |
+    | Below are all of the database connections defined for your application.
+    | An example configuration is provided for each database system which
+    | is supported by Laravel. You're free to add / remove connections.
+    |
+    */
 
     'connections' => [
 
-        // 'sqlite' => [
-        //     'driver' => 'sqlite',
-        //     'url' => env('DB_URL'),
-        //     'database' => env('DB_DATABASE', database_path('database.sqlite')),
-        //     'prefix' => '',
-        //     'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-        //     'busy_timeout' => null,
-        //     'journal_mode' => null,
-        //     'synchronous' => null,
-        // ],
+        'mysql' => [
+            'driver' => 'mysql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('DB_CHARSET', 'utf8mb4'),
+            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
 
-        // 'mysql' => [
-        //     'driver' => 'mysql',
-        //     'url' => env('DB_URL'),
-        //     'host' => env('DB_HOST', '127.0.0.1'),
-        //     'port' => env('DB_PORT', '3306'),
-        //     'database' => env('DB_DATABASE', 'laravel'),
-        //     'username' => env('DB_USERNAME', 'root'),
-        //     'password' => env('DB_PASSWORD', ''),
-        //     'unix_socket' => env('DB_SOCKET', ''),
-        //     'charset' => env('DB_CHARSET', 'utf8mb4'),
-        //     'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
-        //     'prefix' => '',
-        //     'prefix_indexes' => true,
-        //     'strict' => true,
-        //     'engine' => null,
-        //     'options' => extension_loaded('pdo_mysql') ? array_filter([
-        //         PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-        //     ]) : [],
-        // ],
+        'eeportal' => [
+            'driver' => 'mysql',
+            'url' => env('EEDB_URL'),
+            'host' => env('EEDB_HOST', '127.0.0.1'),
+            'port' => env('EEDB_PORT', '3306'),
+            'database' => env('EEDB_DATABASE', 'laravel'),
+            'username' => env('EEDB_USERNAME', 'root'),
+            'password' => env('EEDB_PASSWORD', ''),
+            'unix_socket' => env('EEDB_SOCKET', ''),
+            'charset' => env('EEDB_CHARSET', 'utf8mb4'),
+            'collation' => env('EEDB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
 
         'server25' => [
             'driver' => 'mysql',
@@ -86,26 +82,6 @@ return [
             'unix_socket' => env('MCDB_SOCKET', ''),
             'charset' => env('MCDB_CHARSET', 'utf8mb4'),
             'collation' => env('MCDB_COLLATION', 'utf8mb4_unicode_ci'),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
-
-        'server26' => [
-            'driver' => 'mysql',
-            'url' => env('EECDB_URL'),
-            'host' => env('EECDB_HOST', '127.0.0.1'),
-            'port' => env('EECDB_PORT', '3306'),
-            'database' => env('EECDB_DATABASE', 'laravel'),
-            'username' => env('EECDB_USERNAME', 'root'),
-            'password' => env('EECDB_PASSWORD', ''),
-            'unix_socket' => env('EECDB_SOCKET', ''),
-            'charset' => env('EECDB_CHARSET', 'utf8mb4'),
-            'collation' => env('EECDB_COLLATION', 'utf8mb4_unicode_ci'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
@@ -135,76 +111,26 @@ return [
             ]) : [],
         ],
 
-        // Authify connection
-        'authify' => (function () {
-            $host = getDbHost([
-                '172' => env('AUTH_DB_HOST_172'),
-                '192' => env('AUTH_DB_HOST_192'),
-                'local' => env('AUTH_DB_HOST_LOCAL'),
-            ]);
+        'authify' => [
+            'driver' => 'mysql',
+            'url' => env('ADB_URL'),
+            'host' => env('ADB_HOST', '127.0.0.1'),
+            'port' => env('ADB_PORT', '3306'),
+            'database' => env('ADB_DATABASE', 'laravel'),
+            'username' => env('ADB_USERNAME', 'root'),
+            'password' => env('ADB_PASSWORD', ''),
+            'unix_socket' => env('ADB_SOCKET', ''),
+            'charset' => env('ADB_CHARSET', 'utf8mb4'),
+            'collation' => env('ADB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
 
-            [$username, $password] = getDbCredential(
-                [
-                    '172' => env('AUTH_DB_USERNAME_172'),
-                    '192' => env('AUTH_DB_USERNAME_192'),
-                    'local' => env('AUTH_DB_USERNAME_LOCAL'),
-                ],
-                [
-                    '172' => env('AUTH_DB_PASSWORD_172'),
-                    '192' => env('AUTH_DB_PASSWORD_192'),
-                    'local' => env('AUTH_DB_PASSWORD_LOCAL'),
-                ]
-            );
-
-            return [
-                'driver' => 'mysql',
-                'host' => $host,
-                'port' => env('AUTH_DB_PORT', '3306'),
-                'database' => env('AUTH_DB_DATABASE'),
-                'username' => $username,
-                'password' => $password,
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'prefix' => '',
-                'strict' => true,
-            ];
-        })(),
-
-        // Etech connection
-        'mysql' => (function () {
-            $host = getDbHost([
-                '172' => env('APP_DB_HOST_172'),
-                '192' => env('APP_DB_HOST_192'),
-                'local' => env('APP_DB_HOST_LOCAL'),
-            ]);
-
-            [$username, $password] = getDbCredential(
-                [
-                    '172' => env('APP_DB_USERNAME_172'),
-                    '192' => env('APP_DB_USERNAME_192'),
-                    'local' => env('APP_DB_USERNAME_LOCAL'),
-                ],
-                [
-                    '172' => env('APP_DB_PASSWORD_172'),
-                    '192' => env('APP_DB_PASSWORD_192'),
-                    'local' => env('APP_DB_PASSWORD_LOCAL'),
-                ]
-            );
-
-            return [
-                'driver' => 'mysql',
-                'host' => $host,
-                'port' => env('APP_DB_PORT', '3306'),
-                'database' => env('APP_DB_DATABASE', 'laravel'),
-                'username' => $username,
-                'password' => $password,
-                'charset' => 'utf8mb4',
-                'collation' => 'utf8mb4_unicode_ci',
-                'prefix' => '',
-                'strict' => true,
-                'engine' => null,
-            ];
-        })(),
     ],
 
     /*

@@ -9,7 +9,7 @@ export default function NavLinks() {
             className="flex flex-col flex-grow space-y-1 overflow-y-auto"
             style={{ scrollbarWidth: "none" }}
         >
-             {["superadmin", "admin"].includes(emp_data?.emp_system_role) && (
+             {["superadmin", "admin"].includes(emp_data?.emp_role) && (
             <div>
             <SidebarLink
                 href={route("dashboard")}
@@ -24,7 +24,7 @@ export default function NavLinks() {
             />
             </div>
             )}
-             {!["superadmin", "admin", "moderator"].includes(emp_data?.emp_system_role) && (
+             {!["superadmin", "admin", "moderator"].includes(emp_data?.emp_role) && (
             <div>
             <SidebarLink
                 href={route("dashboards")}
@@ -40,7 +40,7 @@ export default function NavLinks() {
             </div>
             )}
             
-  {!["superadmin", "admin", "moderator"].includes(emp_data?.emp_system_role) && (
+  {!["superadmin", "admin", "moderator"].includes(emp_data?.emp_role) && (
             <div>
             <Dropdown
                 label="My Activities"
@@ -63,7 +63,7 @@ export default function NavLinks() {
             />
             </div>
             )}
-            {["superadmin", "admin"].includes(emp_data?.emp_system_role) && (
+            {["superadmin", "admin"].includes(emp_data?.emp_role) && (
                 <div>
              <SidebarLink
                  href={route("tech.activity")}
@@ -76,7 +76,7 @@ export default function NavLinks() {
             />
             </div>
             )}
-            {["superadmin", "admin", "approver"].includes(emp_data?.emp_system_role) && (
+            {["superadmin", "admin", "approver"].includes(emp_data?.emp_role) && (
                 <div>
             <SidebarLink
                  href={route("tech.forApproval")}
@@ -94,7 +94,7 @@ export default function NavLinks() {
             
 
 
-            {["superadmin", "admin"].includes(emp_data?.emp_system_role) && (
+            {["superadmin", "admin"].includes(emp_data?.emp_role) && (
                 <div>
                     <SidebarLink
                         href={route("admin")}

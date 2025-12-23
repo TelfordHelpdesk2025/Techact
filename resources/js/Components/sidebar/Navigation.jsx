@@ -8,7 +8,7 @@ export default function NavLinks() {
     // fallback sa 0
     const ApprovalCount = Number(forApprovalCount) || 0;
 
-    const role = emp_data?.emp_system_role;
+    const role = emp_data?.emp_role;
 
     return (
         <nav className="flex flex-col flex-grow space-y-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>

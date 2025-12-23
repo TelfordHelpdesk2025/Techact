@@ -1,0 +1,267 @@
+<?php
+
+use Illuminate\Support\Str;
+
+/*
+|--------------------------------------------------------------------------
+| Helper functions
+|--------------------------------------------------------------------------
+|
+| These helpers determine the database host, username, and password
+| based on the server IP.
+|
+*/
+
+if (!function_exists('getDbHost')) {
+    function getDbHost(array $hosts)
+    {
+        $ip = gethostbyname(gethostname());
+        if (str_starts_with($ip, '172')) return $hosts['172'] ?? '127.0.0.1';
+        if (str_starts_with($ip, '192')) return $hosts['192'] ?? '127.0.0.1';
+        return $hosts['local'] ?? '127.0.0.1';
+    }
+}
+
+if (!function_exists('getDbCredential')) {
+    function getDbCredential(array $usernames, array $passwords)
+    {
+        $ip = gethostbyname(gethostname());
+        if (str_starts_with($ip, '172')) return [$usernames['172'], $passwords['172']];
+        if (str_starts_with($ip, '192')) return [$usernames['192'], $passwords['192']];
+        return [$usernames['local'], $passwords['local']];
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Database configuration
+|--------------------------------------------------------------------------
+*/
+return [
+
+    'default' => env('DB_CONNECTION', 'mysql'),
+
+
+    'connections' => [
+
+        // 'sqlite' => [
+        //     'driver' => 'sqlite',
+        //     'url' => env('DB_URL'),
+        //     'database' => env('DB_DATABASE', database_path('database.sqlite')),
+        //     'prefix' => '',
+        //     'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+        //     'busy_timeout' => null,
+        //     'journal_mode' => null,
+        //     'synchronous' => null,
+        // ],
+
+        // 'mysql' => [
+        //     'driver' => 'mysql',
+        //     'url' => env('DB_URL'),
+        //     'host' => env('DB_HOST', '127.0.0.1'),
+        //     'port' => env('DB_PORT', '3306'),
+        //     'database' => env('DB_DATABASE', 'laravel'),
+        //     'username' => env('DB_USERNAME', 'root'),
+        //     'password' => env('DB_PASSWORD', ''),
+        //     'unix_socket' => env('DB_SOCKET', ''),
+        //     'charset' => env('DB_CHARSET', 'utf8mb4'),
+        //     'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+        //     'prefix' => '',
+        //     'prefix_indexes' => true,
+        //     'strict' => true,
+        //     'engine' => null,
+        //     'options' => extension_loaded('pdo_mysql') ? array_filter([
+        //         PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+        //     ]) : [],
+        // ],
+
+        'server25' => [
+            'driver' => 'mysql',
+            'url' => env('MCDB_URL'),
+            'host' => env('MCDB_HOST', '127.0.0.1'),
+            'port' => env('MCDB_PORT', '3306'),
+            'database' => env('MCDB_DATABASE', 'laravel'),
+            'username' => env('MCDB_USERNAME', 'root'),
+            'password' => env('MCDB_PASSWORD', ''),
+            'unix_socket' => env('MCDB_SOCKET', ''),
+            'charset' => env('MCDB_CHARSET', 'utf8mb4'),
+            'collation' => env('MCDB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'server26' => [
+            'driver' => 'mysql',
+            'url' => env('EECDB_URL'),
+            'host' => env('EECDB_HOST', '127.0.0.1'),
+            'port' => env('EECDB_PORT', '3306'),
+            'database' => env('EECDB_DATABASE', 'laravel'),
+            'username' => env('EECDB_USERNAME', 'root'),
+            'password' => env('EECDB_PASSWORD', ''),
+            'unix_socket' => env('EECDB_SOCKET', ''),
+            'charset' => env('EECDB_CHARSET', 'utf8mb4'),
+            'collation' => env('EECDB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'masterlist' => [
+            'driver' => 'mysql',
+            'url' => env('ADB_URL'),
+            'host' => env('MDB_HOST', '127.0.0.1'),
+            'port' => env('MDB_PORT', '3306'),
+            'database' => env('MDB_DATABASE', 'laravel'),
+            'username' => env('MDB_USERNAME', 'root'),
+            'password' => env('MDB_PASSWORD', ''),
+            'unix_socket' => env('MDB_SOCKET', ''),
+            'charset' => env('MDB_CHARSET', 'utf8mb4'),
+            'collation' => env('MDB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        // Authify connection
+        'authify' => (function () {
+            $host = getDbHost([
+                '172' => env('AUTH_DB_HOST_172'),
+                '192' => env('AUTH_DB_HOST_192'),
+                'local' => env('AUTH_DB_HOST_LOCAL'),
+            ]);
+
+            [$username, $password] = getDbCredential(
+                [
+                    '172' => env('AUTH_DB_USERNAME_172'),
+                    '192' => env('AUTH_DB_USERNAME_192'),
+                    'local' => env('AUTH_DB_USERNAME_LOCAL'),
+                ],
+                [
+                    '172' => env('AUTH_DB_PASSWORD_172'),
+                    '192' => env('AUTH_DB_PASSWORD_192'),
+                    'local' => env('AUTH_DB_PASSWORD_LOCAL'),
+                ]
+            );
+
+            return [
+                'driver' => 'mysql',
+                'host' => $host,
+                'port' => env('AUTH_DB_PORT', '3306'),
+                'database' => env('AUTH_DB_DATABASE'),
+                'username' => $username,
+                'password' => $password,
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix' => '',
+                'strict' => true,
+            ];
+        })(),
+
+        // Etech connection
+        'mysql' => (function () {
+            $host = getDbHost([
+                '172' => env('APP_DB_HOST_172'),
+                '192' => env('APP_DB_HOST_192'),
+                'local' => env('APP_DB_HOST_LOCAL'),
+            ]);
+
+            [$username, $password] = getDbCredential(
+                [
+                    '172' => env('APP_DB_USERNAME_172'),
+                    '192' => env('APP_DB_USERNAME_192'),
+                    'local' => env('APP_DB_USERNAME_LOCAL'),
+                ],
+                [
+                    '172' => env('APP_DB_PASSWORD_172'),
+                    '192' => env('APP_DB_PASSWORD_192'),
+                    'local' => env('APP_DB_PASSWORD_LOCAL'),
+                ]
+            );
+
+            return [
+                'driver' => 'mysql',
+                'host' => $host,
+                'port' => env('APP_DB_PORT', '3306'),
+                'database' => env('APP_DB_DATABASE', 'laravel'),
+                'username' => $username,
+                'password' => $password,
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix' => '',
+                'strict' => true,
+                'engine' => null,
+            ];
+        })(),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Migration Repository Table
+    |--------------------------------------------------------------------------
+    |
+    | This table keeps track of all the migrations that have already run for
+    | your application. Using this information, we can determine which of
+    | the migrations on disk haven't actually been run on the database.
+    |
+    */
+
+    'migrations' => [
+        'table' => 'migrations',
+        'update_date_on_publish' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Redis Databases
+    |--------------------------------------------------------------------------
+    |
+    | Redis is an open source, fast, and advanced key-value store that also
+    | provides a richer body of commands than a typical key-value system
+    | such as Memcached. You may define your connection settings here.
+    |
+    */
+
+    'redis' => [
+
+        'client' => env('REDIS_CLIENT', 'phpredis'),
+
+        'options' => [
+            'cluster' => env('REDIS_CLUSTER', 'redis'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
+            'persistent' => env('REDIS_PERSISTENT', false),
+        ],
+
+        'default' => [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_DB', '0'),
+        ],
+
+        'cache' => [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_CACHE_DB', '1'),
+        ],
+
+    ],
+
+];

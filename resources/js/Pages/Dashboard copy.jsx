@@ -30,7 +30,7 @@ export default function Dashboard({
   barChartDataAdminPerTechnician,
   ranked,
 }) {
-  const role = emp_data?.emp_system_role;
+  const role = emp_data?.emp_role;
 
   // 🟢 Add references for your charts
   const adminPerTechChartRef = useRef(null);

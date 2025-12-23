@@ -6,20 +6,14 @@ export default function Unauthorized() {
     const [countdown, setCountdown] = useState(10);
     const [isChristmas, setIsChristmas] = useState(false);
 
-    // Reliable logout using Inertia router.post
     const logout = () => {
-        router.post(route("logout"), {}, {
-            onSuccess: () => {
-                // Clear client storage after server logout
-                localStorage.clear();
-                sessionStorage.clear();
-                // Redirect to login
-                window.location.href = route("login");
-            },
-            onError: (errors) => {
-                console.error("Logout failed:", errors);
-            },
-        });
+        const token = localStorage.getItem("authify-token");
+        localStorage.removeItem("authify-token");
+        router.get(route("logout"));
+        // window.location.href = `http://192.168.2.221/authify/public/logout?key=${encodeURIComponent(
+        window.location.href = `http://192.168.3.201/authify/public/logout?token=${encodeURIComponent(
+            token
+        )}&redirect=${encodeURIComponent(route("dashboard"))}`;
     };
 
     // 🎄 Check if within Christmas theme period (Nov 3 – Jan 2)
@@ -31,20 +25,14 @@ export default function Unauthorized() {
         if (now >= start || now <= end) setIsChristmas(true);
     }, []);
 
-    // Auto-logout countdown
+    // Auto logout (10s)
     useEffect(() => {
-        const timer = setInterval(() => {
-            setCountdown((prev) => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    logout(); // auto logout
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000); // 1 second intervals
-
-        return () => clearInterval(timer);
+        const timer = setInterval(() => setCountdown((prev) => prev - 1), 1000);
+        const autoLogout = setTimeout(() => logout(), 10000);
+        return () => {
+            clearInterval(timer);
+            clearTimeout(autoLogout);
+        };
     }, []);
 
     // Theme setup
@@ -67,7 +55,7 @@ export default function Unauthorized() {
             <div
                 className={`flex items-center justify-center min-h-screen ${bgTheme} text-center relative overflow-hidden`}
             >
-                {/* ❄️ Snowfall layer */}
+                {/* ❄️ Snowfall layer (only for Christmas theme) */}
                 {isChristmas && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
                         {[...Array(80)].map((_, i) => (
@@ -79,7 +67,9 @@ export default function Unauthorized() {
                                     height: `${Math.random() * 6 + 2}px`,
                                     top: `${Math.random() * -200}px`,
                                     left: `${Math.random() * 100}%`,
-                                    animation: `fall ${6 + Math.random() * 6}s linear ${Math.random() * 10}s infinite`,
+                                    animation: `fall ${
+                                        6 + Math.random() * 6
+                                    }s linear ${Math.random() * 10}s infinite`,
                                 }}
                             ></div>
                         ))}
@@ -101,7 +91,9 @@ export default function Unauthorized() {
                         initial={{ scale: 0.9 }}
                         animate={{ scale: [1, 1.1, 1] }}
                         transition={{ repeat: Infinity, duration: 1.5 }}
-                        className={`text-[120px] font-extrabold ${isChristmas ? "text-yellow-300" : "text-red-500"} ${glowColor} mb-4`}
+                        className={`text-[120px] font-extrabold ${
+                            isChristmas ? "text-yellow-300" : "text-red-500"
+                        } ${glowColor} mb-4`}
                     >
                         401
                     </motion.h1>
@@ -118,7 +110,11 @@ export default function Unauthorized() {
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ duration: 1.2, repeat: Infinity, repeatType: "reverse" }}
+                        transition={{
+                            duration: 1.2,
+                            repeat: Infinity,
+                            repeatType: "reverse",
+                        }}
                         className={`text-3xl font-semibold ${accent} mb-8`}
                     >
                         Auto logout in{" "}

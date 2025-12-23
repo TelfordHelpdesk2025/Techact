@@ -147,7 +147,7 @@ class AdminController extends Controller
         // Update session data if the current user is the one whose role is being changed
         if (session('emp_data')['emp_id'] == $id) {
             $empData = session('emp_data');
-            $empData['emp_system_role'] = $role;
+            $empData['emp_role'] = $role;
             session()->put('emp_data', $empData);
         }
 

@@ -40,7 +40,7 @@ export default function Dashboard({
   ranked,
   selectedDate,
 }) {
-  const role = emp_data?.emp_system_role;
+  const role = emp_data?.emp_role;
 
   // Chart refs
   const adminPerTechChartRef = useRef(null);
