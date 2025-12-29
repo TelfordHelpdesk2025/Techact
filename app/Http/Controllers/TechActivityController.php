@@ -20,7 +20,6 @@ class TechActivityController extends Controller
 
     public function index(Request $request)
     {
-
         $result = $this->datatable->handle(
             $request,
             'authify',
@@ -28,13 +27,31 @@ class TechActivityController extends Controller
             [
                 'conditions' => function ($query) {
                     return $query
-                        ->OrderBy('log_time', 'asc');
+                        ->whereIn('status', [
+                            'Ongoing',
+                            'On-Going',
+                            'Complete',
+                            'For Engineer Approval'
+                        ])
+                        ->where(function ($q) {
+                            $q->where('item_status', '!=', 'Deleted')
+                                ->orWhereNull('item_status');
+                        })
+                        ->orderBy('id', 'desc');
                 },
 
-                'searchColumns' => ['emp_name', 'shift', 'my_activity', 'machine', 'log_time', 'time_out', 'status', 'note'],
+                'searchColumns' => [
+                    'emp_name',
+                    'shift',
+                    'my_activity',
+                    'machine',
+                    'log_time',
+                    'time_out',
+                    'status',
+                    'note'
+                ],
             ]
         );
-
 
         if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
             return $result;
@@ -54,6 +71,7 @@ class TechActivityController extends Controller
             ]),
         ]);
     }
+
 
     public function deletedActivity(Request $request)
     {

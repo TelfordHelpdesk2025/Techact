@@ -102,7 +102,7 @@ return [
             ]) : [],
         ],
 
-        'server26' => [
+        'eeportal' => [
             'driver' => 'mysql',
             'url' => env('EECDB_URL'),
             'host' => env('EECDB_HOST', '127.0.0.1'),

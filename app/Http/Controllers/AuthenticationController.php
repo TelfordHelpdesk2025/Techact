@@ -102,9 +102,9 @@ class AuthenticationController extends Controller
         }
 
         // Cleanup expired sessions (older than 3 hours)
-        DB::table('auth_sessions')
-            ->where('generated_at', '<', now()->subHours(3))
-            ->delete();
+        // DB::table('auth_sessions')
+        //     ->where('generated_at', '<', now()->subHours(3))
+        //     ->delete();
 
         return redirect()->route('login');
     }

@@ -4,11 +4,17 @@ export default function NavBar() {
     const { emp_data } = usePage().props;
 
     // Logout function
-   const logout = () => {
+const logout = () => {
     localStorage.clear();
     sessionStorage.clear();
-window.location.reload();
-    router.post(route('logout')); // POST request to Laravel
+
+    router.post(route('logout'), {
+        onFinish: () => {
+            // optional: force redirect if needed
+            // window.location.href = route('login');
+            window.location.reload();
+        },
+    });
 };
 
     // Greeting function

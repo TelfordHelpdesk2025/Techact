@@ -23,7 +23,7 @@ class ActivityController extends Controller
 
         $result = $this->datatable->handle(
             $request,
-            'server26',
+            'eeportal',
             'activity_list',
             [
 
@@ -84,7 +84,7 @@ class ActivityController extends Controller
 
     public function destroy($id)
     {
-        DB::connection('server26')->table('activity_list')->where('id', $id)->delete();
+        DB::connection('eeportal')->table('activity_list')->where('id', $id)->delete();
         return back()->with('success', 'Activity deleted successfully!');
     }
 }

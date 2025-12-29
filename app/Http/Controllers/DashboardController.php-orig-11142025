@@ -15,36 +15,36 @@ class DashboardController extends Controller
         $empName = $empData['emp_name'] ?? null;
 
         // 🔹 Total counts technician
-        $totalActivities = DB::connection('server26')->table('my_activity_list')
+        $totalActivities = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->count();
 
-        $completedActivities = DB::connection('server26')->table('my_activity_list')
+        $completedActivities = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->where('status', 'complete')
             ->count();
 
-        $ongoingActivities = DB::connection('server26')->table('my_activity_list')
+        $ongoingActivities = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->where('status', 'ongoing', 'on going')
             ->count();
 
         // 🔹 Total counts admin
-        $totalActivitiesAdmin = DB::connection('server26')->table('my_activity_list')
+        $totalActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')
             ->count();
 
-        $completedActivitiesAdmin = DB::connection('server26')->table('my_activity_list')
+        $completedActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')
             ->where('status', 'complete')
             ->count();
 
-        $ongoingActivitiesAdmin = DB::connection('server26')->table('my_activity_list')
+        $ongoingActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')
             ->where('status', 'ongoing', 'on going')
             ->count();
 
         // dd($ongoingActivitiesAdmin);
 
         // 🔹 Today's total count (as before)
-        $totalActivitiesTodayAdmin = DB::connection('server26')->table('my_activity_list')
+        $totalActivitiesTodayAdmin = DB::connection('eeportal')->table('my_activity_list')
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
                 Carbon::now()->startOfDay()->format('Y-m-d H:i:s'),
                 Carbon::now()->endOfDay()->format('Y-m-d H:i:s'),
@@ -52,7 +52,7 @@ class DashboardController extends Controller
             ->count();
 
         // 🔹 Today's total count (as before)
-        $totalActivitiesToday = DB::connection('server26')->table('my_activity_list')
+        $totalActivitiesToday = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
                 Carbon::now()->startOfDay()->format('Y-m-d H:i:s'),
@@ -60,7 +60,7 @@ class DashboardController extends Controller
             ])
             ->count();
 
-        $myActivitiesToday = DB::connection('server26')->table('my_activity_list')
+        $myActivitiesToday = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
                 Carbon::now()->startOfDay()->format('Y-m-d H:i:s'),
@@ -86,7 +86,7 @@ class DashboardController extends Controller
 
             foreach ($myActivitiesToday as $activity) {
                 // Compute duration (oras) per activity + status
-                $duration = DB::connection('server26')->table('my_activity_list')
+                $duration = DB::connection('eeportal')->table('my_activity_list')
                     ->selectRaw("
                 SUM(
                     TIME_TO_SEC(
@@ -129,7 +129,7 @@ class DashboardController extends Controller
         $todayEnd   = Carbon::now()->endOfDay()->format('Y-m-d H:i:s');
 
         // 🔹 Kunin lahat ng employee name (labels)
-        $myActivitiesTodayAdmin = DB::connection('server26')->table('my_activity_list')
+        $myActivitiesTodayAdmin = DB::connection('eeportal')->table('my_activity_list')
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$todayStart, $todayEnd])
             ->pluck('emp_name')
             ->unique()
@@ -141,7 +141,7 @@ class DashboardController extends Controller
         $statusCountsAdmin = [];
 
         foreach ($todayStatusesAdmin as $statusAdmin) {
-            $countAdmin = DB::connection('server26')->table('my_activity_list')
+            $countAdmin = DB::connection('eeportal')->table('my_activity_list')
                 ->where('status', $statusAdmin)
                 ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$todayStart, $todayEnd])
                 ->count();
@@ -157,7 +157,7 @@ class DashboardController extends Controller
                 [
                     'label' => 'Completed',
                     'data' => array_map(function ($emp) use ($todayStart, $todayEnd) {
-                        return DB::connection('server26')->table('my_activity_list')
+                        return DB::connection('eeportal')->table('my_activity_list')
                             ->where('emp_name', $emp)
                             ->where('status', 'complete')
                             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$todayStart, $todayEnd])
@@ -168,7 +168,7 @@ class DashboardController extends Controller
                 [
                     'label' => 'Ongoing',
                     'data' => array_map(function ($emp) use ($todayStart, $todayEnd) {
-                        return DB::connection('server26')->table('my_activity_list')
+                        return DB::connection('eeportal')->table('my_activity_list')
                             ->where('emp_name', $emp)
                             ->where('status', 'ongoing')
                             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$todayStart, $todayEnd])
@@ -184,7 +184,7 @@ class DashboardController extends Controller
         $todayEndPerTechnician   = Carbon::now()->endOfDay()->format('Y-m-d H:i:s');
 
         // 🔹 Get all technicians (X-axis labels)
-        $myActivitiesTodayAdminPerTechnician = DB::connection('server26')->table('my_activity_list')
+        $myActivitiesTodayAdminPerTechnician = DB::connection('eeportal')->table('my_activity_list')
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
                 $todayStartPerTechnician,
                 $todayEndPerTechnician
@@ -195,7 +195,7 @@ class DashboardController extends Controller
             ->toArray();
 
         // 🔹 Get all distinct activities
-        $activitiesList = DB::connection('server26')->table('my_activity_list')
+        $activitiesList = DB::connection('eeportal')->table('my_activity_list')
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [
                 $todayStartPerTechnician,
                 $todayEndPerTechnician
@@ -206,7 +206,7 @@ class DashboardController extends Controller
             ->toArray();
 
         // 🔹 Get total minutes per technician per activity
-        $rawData = DB::connection('server26')->table('my_activity_list')
+        $rawData = DB::connection('eeportal')->table('my_activity_list')
             ->select(
                 'emp_name',
                 'my_activity',
@@ -265,7 +265,7 @@ class DashboardController extends Controller
         $todayStart = Carbon::now()->startOfDay()->format('Y-m-d H:i:s');
         $todayEnd   = Carbon::now()->endOfDay()->format('Y-m-d H:i:s');
 
-        $ranking = DB::connection('server26')
+        $ranking = DB::connection('eeportal')
             ->table('my_activity_list')
             ->select(
                 'emp_name',

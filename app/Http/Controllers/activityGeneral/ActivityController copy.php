@@ -28,7 +28,7 @@ class ActivityController extends Controller
 
         $result = $this->datatable->handle(
             $request,
-            'server26',
+            'eeportal',
             'activity_list',
             [
                 'searchColumns' => ['activity', 'description', 'created_by', 'date_created'],
@@ -65,12 +65,12 @@ class ActivityController extends Controller
     {
 
         // dd($request->all());
-        $checkIfExists = DB::connection('server26')->table('activity_list')
+        $checkIfExists = DB::connection('eeportal')->table('activity_list')
             ->where('activity', $request->input('activity'))
             ->exists();
 
         if (!$checkIfExists) {
-            DB::connection('server26')->table('activity_list')
+            DB::connection('eeportal')->table('activity_list')
                 ->insert([
                     'activity' => $request->input('activity'),
                     'description' => $request->input('description'),
@@ -90,7 +90,7 @@ class ActivityController extends Controller
             'description' => 'required|string|max:1000',
         ]);
 
-        DB::connection('server26')->table('activity_list')
+        DB::connection('eeportal')->table('activity_list')
             ->where('id', $id)
             ->update([
                 'activity' => $request->activity,
@@ -103,7 +103,7 @@ class ActivityController extends Controller
 
     public function destroy($id)
     {
-        DB::connection('server26')->table('activity_list')->where('id', $id)->delete();
+        DB::connection('eeportal')->table('activity_list')->where('id', $id)->delete();
         return back()->with('success', 'Activity deleted successfully!');
     }
 
@@ -114,7 +114,7 @@ class ActivityController extends Controller
         $year = $request->input('year');
         [$start, $end] = $this->getQuarterBounds($quarter, $year);
 
-        $rows = DB::connection('server26')->table('my_activity_list')
+        $rows = DB::connection('eeportal')->table('my_activity_list')
             ->whereBetween('date_created', [$start, $end])
             ->orderBy('id', 'desc')
             ->get();

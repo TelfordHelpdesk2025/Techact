@@ -94,7 +94,7 @@ class OngoingActivityController extends Controller
         }
 
         // ✅ Get activity options from database
-        $activityOptions = DB::connection('server26')->table('activity_list')
+        $activityOptions = DB::connection('eeportal')->table('activity_list')
             ->pluck('activity')
             ->toArray();
 
@@ -274,7 +274,7 @@ class OngoingActivityController extends Controller
         }
 
         // ✅ Get activity options from database
-        $activityOptions = DB::connection('server26')->table('activity_list')
+        $activityOptions = DB::connection('eeportal')->table('activity_list')
             ->pluck('activity')
             ->toArray();
 
