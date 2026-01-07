@@ -18,7 +18,7 @@ export default function NavLinks() {
                 icon={<i className="fa-solid fa-gauge-high"></i>}
             />
 
-            {!["superadmin", "admin", "approver", "engineer"].includes(role) && (
+            {!["superadmin", "admin", "approver"].includes(role) && (
                 <Dropdown
                     label="My Activities"
                     icon={<i className="fa-solid fa-list-check"></i>}
@@ -30,7 +30,7 @@ export default function NavLinks() {
                 />
             )}
 
-            {["superadmin", "admin", "approver", "engineer"].includes(role) && (
+            {["superadmin", "admin", "approver"].includes(role) && (
                 <>
                     <SidebarLink
                         href={route("tech.activity")}

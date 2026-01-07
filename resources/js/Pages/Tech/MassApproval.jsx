@@ -23,9 +23,7 @@ export default function MassApproval({ activities = [], empData = {} }) {
   const handleMassApprove = () => {
     if (!selected.length) return alert("No activities selected!");
 
-    router.put(
-      "/tech/forApproval/mass/approve",
-      {
+    router.put(route('tech.mass.approve'), {
         ids: selected,
         approver_id: form.emp_id,
         approver_name: form.emp_name,

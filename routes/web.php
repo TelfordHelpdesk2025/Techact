@@ -80,7 +80,8 @@ Route::prefix($app_name)
         Route::get('/tech/forApproval/mass', [OngoingActivityController::class, 'massApproval'])
             ->name('tech.forApproval.mass');
 
-        Route::put('/tech/forApproval/mass/approve', [OngoingActivityController::class, 'bulkApprove']);
+        Route::put('/tech/forApproval/mass/approve', [OngoingActivityController::class, 'bulkApprove'])
+            ->name('tech.mass.approve');
     });
 
 // fallback

@@ -47,7 +47,7 @@ class AuthMiddleware
         if (
             session('emp_data') &&
             !in_array(session('emp_data')['emp_dept'], ['Equipment Engineering']) &&
-            !in_array(session('emp_data')['emp_role'], ['admin', 'superadmin'])
+            !in_array(session('emp_data')['emp_role'], ['admin', 'superadmin', 'approver'])
         ) {
             // User is not authorized
             session()->forget('auth_token');
