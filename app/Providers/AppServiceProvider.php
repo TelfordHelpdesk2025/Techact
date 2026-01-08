@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
         // Para sa Inertia shared props
         Inertia::share([
             'forApprovalCount' => function () {
-                return DB::table('my_activity_list')
+                return DB::connection('eeportal')->table('my_activity_list')
                     ->where('status', 'like', 'for engineer approval%')
                     ->count();
             },

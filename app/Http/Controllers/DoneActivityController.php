@@ -87,7 +87,7 @@ class OngoingActivityController extends Controller
         }
 
         // ✅ Get activity options from database
-        $activityOptions = DB::connection('mysql')->table('activity_list')
+        $activityOptions = DB::connection('eeportal')->table('activity_list')
             ->pluck('activity')
             ->toArray();
 
@@ -138,7 +138,7 @@ class OngoingActivityController extends Controller
     //         ? 'On Going'
     //         : 'For Approval';
 
-    //     DB::table('my_activity_list')->insert([
+    //     DB::connection('eeportal')->table('my_activity_list')->insert([
     //         'emp_id'      => $request->emp_id,
     //         'emp_name'    => $request->emp_name,
     //         'shift'       => $request->shift,

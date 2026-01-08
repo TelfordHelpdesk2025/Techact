@@ -52,6 +52,26 @@ class ActivityController extends Controller
         ]);
     }
 
+    public function store(Request $request)
+    {
+
+        // dd($request->all());
+        $checkIfExists = DB::connection('eeportal')->table('activity_list')
+            ->where('activity', $request->input('activity'))
+            ->exists();
+
+        if (!$checkIfExists) {
+            DB::connection('eeportal')->table('activity_list')
+                ->insert([
+                    'activity' => $request->input('activity'),
+                    'description' => $request->input('description'),
+                    'created_by' => session('emp_data')['emp_name'],
+                ]);
+        }
+
+        return back()->with('success', 'Activity added successfully.');
+    }
+
     public function getActivityData(Request $request)
     {
         $start = $request->input('start_date');

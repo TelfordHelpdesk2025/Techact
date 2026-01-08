@@ -13,20 +13,20 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         // ✅ bilang ng lahat ng activities (lahat ng empleyado)
-        $totalActivities = DB::table('my_activity_list')->count();
+        $totalActivities = DB::connection('eeportal')->table('my_activity_list')->count();
 
         // ✅ bilang ng Complete (lahat)
-        $completeCount = DB::table('my_activity_list')
+        $completeCount = DB::connection('eeportal')->table('my_activity_list')
             ->where('status', 'Complete')
             ->count();
 
         // ✅ bilang ng Ongoing (lahat)
-        $ongoingCount = DB::table('my_activity_list')
+        $ongoingCount = DB::connection('eeportal')->table('my_activity_list')
             ->whereIn('status', ['Ongoing', 'On Going'])
             ->count();
 
         // ✅ bilang ng Approved (lahat ng Complete na may opt_name hindi null)
-        $approvedCount = DB::table('my_activity_list')
+        $approvedCount = DB::connection('eeportal')->table('my_activity_list')
             ->where('status', 'Complete')
             ->whereNotNull('opt_name')
             ->count();
@@ -51,16 +51,16 @@ class DashboardController extends Controller
         }
 
         $stats = [
-            'total' => DB::table('my_activity_list')
+            'total' => DB::connection('eeportal')->table('my_activity_list')
                 ->where('emp_name', $empName)
                 ->count(),
 
-            'complete' => DB::table('my_activity_list')
+            'complete' => DB::connection('eeportal')->table('my_activity_list')
                 ->where('status', 'Complete')
                 ->where('emp_name', $empName)
                 ->count(),
 
-            'ongoing' => DB::table('my_activity_list')
+            'ongoing' => DB::connection('eeportal')->table('my_activity_list')
                 ->whereIn('status', ['Ongoing', 'On Going'])
                 ->where('emp_name', $empName)
                 ->count(),

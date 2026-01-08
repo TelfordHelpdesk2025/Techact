@@ -25,7 +25,7 @@ class DashboardController extends Controller
         $dayEnd   = $date->copy()->endOfDay()->format('Y-m-d H:i:s');
 
         // 🔄 Auto-update "For Engineer Approval" → "Ongoing" after 24 hours
-        // DB::connection('authify')->table('my_activity_list')
+        // DB::connection('eeportal')->table('my_activity_list')
         //     ->where('status', 'like', 'for engineer approval%')
         //     ->whereNotNull('log_time')
         //     ->whereRaw("TIMESTAMPDIFF(
@@ -41,40 +41,40 @@ class DashboardController extends Controller
 
 
         // 🔹 Total counts technician
-        $totalActivities = DB::connection('authify')->table('my_activity_list')
+        $totalActivities = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->count();
 
-        $completedActivities = DB::connection('authify')->table('my_activity_list')
+        $completedActivities = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->where('status', 'complete')
             ->count();
 
-        $ongoingActivities = DB::connection('authify')->table('my_activity_list')
+        $ongoingActivities = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->whereIn('status', ['ongoing', 'on-going'])
             ->count();
 
         // 🔹 Total counts admin
-        $totalActivitiesAdmin = DB::connection('authify')->table('my_activity_list')->count();
-        $completedActivitiesAdmin = DB::connection('authify')->table('my_activity_list')->where('status', 'complete')->count();
-        $ongoingActivitiesAdmin = DB::connection('authify')->table('my_activity_list')->whereIn('status', ['ongoing', 'on-going'])->count();
+        $totalActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')->count();
+        $completedActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')->where('status', 'complete')->count();
+        $ongoingActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')->whereIn('status', ['ongoing', 'on-going'])->count();
 
         // 🔹 Today's total counts
-        $totalActivitiesTodayAdmin = DB::connection('authify')->table('my_activity_list')
+        $totalActivitiesTodayAdmin = DB::connection('eeportal')->table('my_activity_list')
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->count();
 
-        $totalApprovalAdmin = DB::connection('authify')->table('my_activity_list')
+        $totalApprovalAdmin = DB::connection('eeportal')->table('my_activity_list')
             ->where('status', 'For Engineer Approval')
             ->count();
 
-        $totalActivitiesToday = DB::connection('authify')->table('my_activity_list')
+        $totalActivitiesToday = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->count();
 
-        $myActivitiesToday = DB::connection('authify')->table('my_activity_list')
+        $myActivitiesToday = DB::connection('eeportal')->table('my_activity_list')
             ->where('emp_name', $empName)
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->pluck('my_activity');
@@ -93,7 +93,7 @@ class DashboardController extends Controller
         foreach ($todayStatuses as $status) {
             $data = [];
             foreach ($myActivitiesToday as $activity) {
-                $duration = DB::connection('authify')->table('my_activity_list')
+                $duration = DB::connection('eeportal')->table('my_activity_list')
                     ->selectRaw("SUM(TIME_TO_SEC(TIMEDIFF(STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s'), STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')))/3600) AS total_hours")
                     ->where('emp_name', $empName)
                     ->where('status', $status)
@@ -115,7 +115,7 @@ class DashboardController extends Controller
         ];
 
         // 🔹 Admin bar chart
-        $myActivitiesTodayAdmin = DB::connection('authify')->table('my_activity_list')
+        $myActivitiesTodayAdmin = DB::connection('eeportal')->table('my_activity_list')
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->pluck('emp_name')
             ->unique()
@@ -123,14 +123,14 @@ class DashboardController extends Controller
             ->toArray();
 
         $datasetsAdminPerTechnician = [];
-        $activitiesList = DB::connection('authify')->table('my_activity_list')
+        $activitiesList = DB::connection('eeportal')->table('my_activity_list')
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->pluck('my_activity')
             ->unique()
             ->values()
             ->toArray();
 
-        $rawData = DB::connection('authify')->table('my_activity_list')
+        $rawData = DB::connection('eeportal')->table('my_activity_list')
             ->select('emp_name', 'my_activity', DB::raw("SUM(TIMESTAMPDIFF(MINUTE, STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s'), STR_TO_DATE(time_out, '%b/%d/%Y %H:%i:%s'))) AS total_minutes"))
             ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->groupBy('emp_name', 'my_activity')
@@ -154,7 +154,7 @@ class DashboardController extends Controller
             'datasets' => [
                 [
                     'label' => 'Completed',
-                    'data' => array_map(fn($emp) => DB::connection('authify')->table('my_activity_list')
+                    'data' => array_map(fn($emp) => DB::connection('eeportal')->table('my_activity_list')
                         ->where('emp_name', $emp)->where('status', 'complete')
                         ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
                         ->count(), $myActivitiesTodayAdmin),
@@ -162,7 +162,7 @@ class DashboardController extends Controller
                 ],
                 [
                     'label' => 'On-going',
-                    'data' => array_map(fn($emp) => DB::connection('authify')->table('my_activity_list')
+                    'data' => array_map(fn($emp) => DB::connection('eeportal')->table('my_activity_list')
                         ->where('emp_name', $emp)->where('status', 'on-going')
                         ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
                         ->count(), $myActivitiesTodayAdmin),
@@ -170,7 +170,7 @@ class DashboardController extends Controller
                 ],
                 [
                     'label' => 'Ongoing',
-                    'data' => array_map(fn($emp) => DB::connection('authify')->table('my_activity_list')
+                    'data' => array_map(fn($emp) => DB::connection('eeportal')->table('my_activity_list')
                         ->where('emp_name', $emp)->where('status', 'ongoing')
                         ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
                         ->count(), $myActivitiesTodayAdmin),
@@ -178,7 +178,7 @@ class DashboardController extends Controller
                 ],
                 [
                     'label' => 'For Engineer Approval',
-                    'data' => array_map(fn($emp) => DB::connection('authify')->table('my_activity_list')
+                    'data' => array_map(fn($emp) => DB::connection('eeportal')->table('my_activity_list')
                         ->where('emp_name', $emp)->where('status', 'for engineer approval')
                         ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
                         ->count(), $myActivitiesTodayAdmin),
@@ -193,7 +193,7 @@ class DashboardController extends Controller
         ];
 
         // 🔹 Ranking
-        $ranking = DB::connection('authify')
+        $ranking = DB::connection('eeportal')
             ->table('my_activity_list')
             ->select(
                 'emp_name',

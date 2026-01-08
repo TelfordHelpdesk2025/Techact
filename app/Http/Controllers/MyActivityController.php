@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\MyActivity;
+use Illuminate\Support\Facades\DB;
 
 class MyActivityController extends Controller
 {
@@ -15,7 +16,7 @@ class MyActivityController extends Controller
 
     public function store(Request $request)
     {
-        $activity = MyActivity::create([
+        $activity = DB::connection('eeportal')->table('my_activity_list')->insert([
             'emp_id' => $request->emp_id,
             'emp_name' => $request->emp_name,
             'shift' => $request->shift,

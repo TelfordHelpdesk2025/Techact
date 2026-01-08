@@ -22,7 +22,7 @@ class TechActivityController extends Controller
     {
         $result = $this->datatable->handle(
             $request,
-            'authify',
+            'eeportal',
             'my_activity_list',
             [
                 'conditions' => function ($query) {
@@ -77,7 +77,7 @@ class TechActivityController extends Controller
     {
         $result = $this->datatable->handle(
             $request,
-            'authify',
+            'eeportal',
             'my_activity_list',
             [
                 'conditions' => function ($query) {
@@ -110,7 +110,7 @@ class TechActivityController extends Controller
 
     public function deletedStatus(Request $request, $id)
     {
-        DB::connection('authify')
+        DB::connection('eeportal')
             ->table('my_activity_list')
             ->where('id', $id)
             ->update([
@@ -124,7 +124,7 @@ class TechActivityController extends Controller
 
     public function restoreStatus(Request $request, $id)
     {
-        DB::connection('authify')
+        DB::connection('eeportal')
             ->table('my_activity_list')
             ->where('id', $id)
             ->update([
