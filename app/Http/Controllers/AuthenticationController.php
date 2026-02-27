@@ -95,11 +95,11 @@ class AuthenticationController extends Controller
         $request->session()->regenerateToken();
 
         // Delete ALL sessions ng user
-        if ($empId) {
-            DB::table('auth_sessions')
-                ->where('emp_id', $empId)
-                ->delete();
-        }
+        // if ($empId) {
+        //     DB::table('auth_sessions')
+        //         ->where('emp_id', $empId)
+        //         ->delete();
+        // }
 
         // Cleanup expired sessions (older than 3 hours)
         // DB::table('auth_sessions')

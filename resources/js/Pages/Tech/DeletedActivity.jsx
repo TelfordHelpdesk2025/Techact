@@ -73,12 +73,26 @@ export default function DeletedActivity({ tableData, tableFilters }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
 
+  const deleteActivity = (id) => {
+    if (confirm("Are you sure you want to delete this activity?")) {
+        router.delete(route('activity.permanent-delete', { id }), {
+            preserveScroll: true,
+            onSuccess: () => {
+                alert("🗑️ Activity deleted successfully!");
+            },
+        });
+    }
+};
+
+
  const dataWithBadgesAndDuration = (tableData?.data || []).map((row, index) => ({
   ...row,
   i: index + 1,
   // duration: calculateDuration(row),
   shift: getShiftBadge(row),
   status: getStatusBadge(row.status),
+
+
 
   viewDetails: (
     <div className="flex gap-2">
@@ -92,9 +106,10 @@ export default function DeletedActivity({ tableData, tableFilters }) {
       >
         <div className="flex items-center">
           <i className="fa-solid fa-eye mr-1"></i>
-          View
         </div>
       </button>
+
+      
 
       {/* Restore Button */}
       <button
@@ -117,7 +132,16 @@ export default function DeletedActivity({ tableData, tableFilters }) {
       >
         <div className="flex items-center">
           <i className="fa-solid fa-undo mr-1"></i>
-          Restore
+        </div>
+      </button>
+
+      {/* Delete Button */}
+      <button
+        className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+        onClick={() => deleteActivity(row.id)}
+      >
+        <div className="flex items-center">
+          <i className="fa-solid fa-trash mr-1"></i>
         </div>
       </button>
     </div>

@@ -94,6 +94,24 @@ function DurationCell({ row }) {
   return <span className="font-mono">{duration}</span>;
 }
 
+function computeLogToOutDuration(row) {
+  const { log_time, time_out } = row;
+
+  if (!log_time || !time_out) return "-";
+
+  const start = new Date(log_time);
+  const end = new Date(time_out);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return "-";
+
+  return formatDuration(start, end);
+}
+
+function LogToOutDuration({ row }) {
+  const duration = computeLogToOutDuration(row);
+  return <span className="font-mono">{duration}</span>;
+}
+
 
 
 
@@ -318,6 +336,31 @@ useEffect(() => {
         <input hidden name="approver_name" value={form.emp_name} />
         <input hidden name="approve_date" value={new Date().toLocaleString()} />
 
+        <div className="grid grid-cols-4 gap-4">
+        {/* Technician */}
+        <div className="mb-4">
+          <label className="block text-white mb-1">Technician</label>
+          <div className="w-full p-2 rounded border bg-gray-600 text-white">
+              {selectedActivity.emp_name}
+            </div>
+        </div>
+
+       {/* Shift */}
+        <div className="mb-4">
+          <label className="block text-white mb-1">Shift</label>
+          <div 
+              className={`w-full p-2 rounded border tracking-wider ${
+                selectedActivity.shiftText === "A-Shift"
+                ? "border-indigo-500 bg-indigo-900 text-indigo-100"
+                : selectedActivity.shiftText === "C-Shift"
+                ? "border-yellow-500 bg-yellow-900 text-yellow-100"
+                : "border-indigo-500 bg-indigo-900 text-indigo-100"
+              }`}
+            >
+              {selectedActivity.shiftText}
+            </div>
+        </div>
+
         {/* Activity */}
         <div className="mb-4">
           <label className="block text-white mb-1">Activity</label>
@@ -339,6 +382,31 @@ useEffect(() => {
             readOnly
           />
         </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+        {/* Log Time */}
+        <div className="mb-4">
+          <label className="block text-white mb-1">Log Time</label>
+          <div className="w-full p-2 rounded border border-sky-500 bg-sky-900 tracking-wider text-sky-100">
+              {selectedActivity.log_time}
+            </div>
+        </div>
+        {/* Time Out */}
+        <div className="mb-4">
+            <label className="block text-white mb-1">Completion Time</label>
+            <div className="w-full p-2 rounded border border-sky-500 bg-sky-900 tracking-wider text-sky-100">
+              {selectedActivity.time_out}
+            </div>
+        </div>
+        {/* Duration Time */}
+        <div className="mb-4">
+          <label className="block text-white mb-1">Total Time Spent on Activity</label>
+            <div className="w-full p-2 rounded border border-emerald-500 bg-emerald-900 tracking-wider text-emerald-100">
+              <LogToOutDuration row={selectedActivity} />
+            </div>
+        </div>
+        </div>
 
         {/* Status */}
         <div className="mb-4">
@@ -357,7 +425,7 @@ useEffect(() => {
           <label className="block text-white mb-1">Note</label>
           <textarea
             value={selectedActivity.note || ""}
-            className="w-full p-3 rounded border text-white bg-gray-600"
+            className="w-full h-32 p-3 rounded border text-white bg-gray-600"
             readOnly
           />
         </div>
@@ -368,7 +436,7 @@ useEffect(() => {
           <textarea
             value={form.remarks || ""}
             onChange={(e) => setForm(prev => ({ ...prev, remarks: e.target.value }))}
-            className="w-full p-3 rounded border text-gray-700 bg-white"
+            className="w-full h-32 p-3 rounded border text-gray-700 bg-white"
             placeholder="Enter your remarks here..."
             required
           />

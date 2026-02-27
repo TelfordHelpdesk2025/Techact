@@ -34,6 +34,9 @@ Route::prefix($app_name)
         Route::put('/activity/{id}/restore-status', [TechActivityController::class, 'restoreStatus'])
             ->name('activity.restore-status');
 
+        Route::delete('/activity/{id}/permanent-delete', [TechActivityController::class, 'permanentDelete'])
+            ->name('activity.permanent-delete');
+
 
         Route::get('/ongoing-activity', [OngoingActivityController::class, 'index'])->name('tech.ongoing');
 

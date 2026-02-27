@@ -108,7 +108,9 @@ export default function NewAdmin({ tableData, tableFilters, emp_data }) {
                                     {emp_data?.emp_role === "superadmin" && (
                                         <option value="superadmin">Superadmin</option>
                                     )}
-                                    <option value="admin">Admin</option>
+                                    {!emp_data?.emp_role === "approver" && (
+                                        <option value="admin">Admin</option>
+                                    )}
                                     <option value="approver">Approver</option>
                                 </select>
                             </div>

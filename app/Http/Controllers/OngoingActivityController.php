@@ -163,8 +163,53 @@ class OngoingActivityController extends Controller
     /**
      * Update an activity
      */
+    // public function updateActivity(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'time_out'    => 'required|string',
+    //         'my_activity' => 'required|string',
+    //         'machine'     => 'required|string',
+    //         'note'        => 'nullable|string',
+    //         'status'      => 'nullable|string',
+    //     ]);
+
+    //     $status = trim($request->status);
+
+    //     // auto adjust
+    //     switch ($status) {
+    //         case "Ongoing":
+    //             $status = "Complete";
+    //             break;
+    //         case "On-Going":
+    //             $status = "For Engineer Approval";
+    //             break;
+    //         case "For Engineer Approval":
+    //             $status = "Ongoing"; // 🔄 cycle balik
+    //             break;
+    //     }
+
+    //     // ✅ parse any human-readable date/time
+    //     $timeOut = \Carbon\Carbon::parse($request->time_out)->format('M/d/Y H:i:s');
+
+    //     DB::connection('authify')->table('my_activity_list')
+    //         ->where('id', $id)
+    //         ->update([
+    //             'time_out'    => $timeOut,
+    //             'my_activity'  => $request->my_activity,
+    //             'machine'      => $request->machine,
+    //             'note'         => $request->note,
+    //             'status'       => $status,
+    //             'date_updated' => now(),
+    //         ]);
+
+    //     return back()->with('success', 'Activity updated successfully.');
+    // }
+
     public function updateActivity(Request $request, $id)
     {
+        // ==========================
+        // VALIDATE INPUT
+        // ==========================
         $request->validate([
             'time_out'    => 'required|string',
             'my_activity' => 'required|string',
@@ -173,9 +218,57 @@ class OngoingActivityController extends Controller
             'status'      => 'nullable|string',
         ]);
 
+        // ==========================
+        // FETCH EXISTING RECORD
+        // ==========================
+        $activity = DB::connection('authify')
+            ->table('my_activity_list')
+            ->where('id', $id)
+            ->first();
+
+        if (!$activity) {
+            return redirect()->route('tech.ongoing')
+                ->with('error', 'Activity not found.');
+        }
+
+        // ==========================
+        // PARSE TIME OUT (LOCAL TIME FROM FRONTEND)
+        // ==========================
+        try {
+            // Expect format: "Feb/27/2026 11:13:53"
+            $timeOut = Carbon::createFromFormat('M/d/Y H:i:s', $request->time_out, 'Asia/Manila');
+        } catch (\Exception $e) {
+            return redirect()->route('tech.ongoing')
+                ->with('error', 'Invalid time format. Check your device Date & Time.');
+        }
+
+        // ==========================
+        // PARSE LOG_TIME (EXISTING RECORD, CUSTOM FORMAT)
+        // ==========================
+        try {
+            $logTime = Carbon::createFromFormat('M/d/Y H:i:s', $activity->log_time, 'Asia/Manila');
+        } catch (\Exception $e) {
+            return redirect()->route('tech.ongoing')
+                ->with('error', 'Invalid log_time format in database.');
+        }
+
+        // ==========================
+        // CHECK MONTH + YEAR MATCH
+        // ==========================
+        if (
+            $timeOut->format('m') !== $logTime->format('m') ||
+            $timeOut->format('Y') !== $logTime->format('Y')
+        ) {
+
+            return redirect()->route('tech.ongoing')
+                ->with('error', 'Check your device Date & Time. Month does not match log time.');
+        }
+
+        // ==========================
+        // AUTO STATUS ADJUST
+        // ==========================
         $status = trim($request->status);
 
-        // auto adjust
         switch ($status) {
             case "Ongoing":
                 $status = "Complete";
@@ -184,17 +277,18 @@ class OngoingActivityController extends Controller
                 $status = "For Engineer Approval";
                 break;
             case "For Engineer Approval":
-                $status = "Ongoing"; // 🔄 cycle balik
+                $status = "Ongoing";
                 break;
         }
 
-        // ✅ parse any human-readable date/time
-        $timeOut = \Carbon\Carbon::parse($request->time_out)->format('M/d/Y H:i:s');
-
-        DB::connection('authify')->table('my_activity_list')
+        // ==========================
+        // UPDATE DATABASE
+        // ==========================
+        DB::connection('authify')
+            ->table('my_activity_list')
             ->where('id', $id)
             ->update([
-                'time_out'    => $timeOut,
+                'time_out'     => $timeOut->format('M/d/Y H:i:s'), // same format as log_time
                 'my_activity'  => $request->my_activity,
                 'machine'      => $request->machine,
                 'note'         => $request->note,
@@ -202,7 +296,22 @@ class OngoingActivityController extends Controller
                 'date_updated' => now(),
             ]);
 
-        return back()->with('success', 'Activity updated successfully.');
+        // ==========================
+        // STATUS-BASED FRIENDLY MESSAGE
+        // ==========================
+        $statusMessages = [
+            'Complete' => '🎉 Congratulations! You’ve completed this activity. You can now start your next task.',
+            'For Engineer Approval' => 'Activity submitted for engineer approval.',
+            'Ongoing' => 'You’re now working on this activity.',
+        ];
+
+        $message = $statusMessages[$status] ?? 'Activity updated successfully.';
+
+        // ==========================
+        // RETURN BACK WITH FLASH
+        // ==========================
+        return redirect()->route('tech.ongoing')
+            ->with('success', $message);
     }
 
 

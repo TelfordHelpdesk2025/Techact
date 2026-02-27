@@ -133,7 +133,9 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
                                             {emp_data?.emp_role === "superadmin" && (
                                                 <option value="superadmin">Superadmin</option>
                                             )}
+                                            {!emp_data?.emp_role === "approver" && (
                                             <option value="admin">Admin</option>
+                                            )}
                                             <option value="approver">Approver</option>
                                         </select>
 

@@ -1,374 +1,271 @@
 import React, { useState, useEffect } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, usePage } from "@inertiajs/react"; // ✅ dagdag usePage para sa flash messages
+import { Head, usePage } from "@inertiajs/react";
 import DataTable from "@/Components/DataTable";
 import { router } from "@inertiajs/react";
 import toast from "react-hot-toast";
+import { Drawer, Form, Input, Select, Button, Space, Card } from "antd";
+import {
+  UserOutlined,
+  IdcardOutlined,
+  ClockCircleOutlined,
+  AppstoreOutlined,
+  ToolOutlined,
+  FileTextOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  InfoCircleOutlined,
+  EyeOutlined,
+ExclamationCircleOutlined,
+FileTextTwoTone,
+PlusOutlined 
+} from "@ant-design/icons";
 
-
-
-function calculateDuration(row) {
-  const { log_time, time_out, status } = row;
-
-  const start = log_time ? new Date(log_time) : null;
-  let end = null;
-
-  // ✅ Kung may time_out gamitin siya, kung wala current time ang fallback
-  if (time_out) {
-    end = new Date(time_out);
-  } else {
-    end = new Date(); 
-  }
-
-  if (!start || isNaN(start) || !end || isNaN(end)) return "-";
-
-  const diffMs = end - start;
-  if (diffMs < 0) return "-";
-
-  const diffMinutes = Math.floor(diffMs / 60000);
-  if (diffMinutes > 0) return `${diffMinutes} min`;
-
-  const diffSeconds = Math.floor(diffMs / 1000);
-  return `${diffSeconds} secs`;
-}
-
-function getShiftBadge(row) {
-  let shift = row.shift || "";
-  let badgeClass = "badge bg-secondary";
-  if (!shift) {
-    const logDate = new Date(row.log_time);
-    if (!isNaN(logDate)) {
-      const hours = logDate.getHours();
-      const minutes = logDate.getMinutes();
-      const totalMinutes = hours * 60 + minutes;
-      if (totalMinutes >= 7 * 60 + 1 && totalMinutes <= 19 * 60) {
-        shift = "A-Shift";
-        badgeClass = "badge bg-primary text-white";
-      } else {
-        shift = "C-Shift";
-        badgeClass = "badge bg-warning text-white";
-      }
-    } else {
-      shift = "Unknown";
-      badgeClass = "badge bg-secondary text-white";
-    }
-  } else {
-    if (shift === "A-Shift") badgeClass = "badge bg-primary  text-white";
-    else if (shift === "C-Shift") badgeClass = "badge bg-warning  text-white";
-  }
-  return <span className={badgeClass}>{shift}</span>;
-}
-
-function getStatusBadge(status) {
-  if (!status) return <span className="badge bg-secondary text-white">Unknown</span>;
-  const lower = status.toLowerCase();
-  if (lower.startsWith("ongoing") || lower === "on-going")
-    return <span className="badge bg-info text-white">{status}</span>;
-  if (lower === "complete")
-    return <span className="badge bg-success text-white">{status}</span>;
-  if (lower.startsWith("for engineer approval"))
-    return <span className="badge bg-primary text-white">{status}</span>;
-  return <span className="badge bg-secondary text-white">{status}</span>;
-}
-
-export default function Activity({
-  tableData,
-  tableFilters,
-  auth,
-  empData,
-  activityOptions,
-  machineOptions,
-}) {
-
-  
-  const { flash } = usePage().props; // ✅ kunin flash messages galing backend
-    // console.log(usePage().props); // ✅ Here!
+export default function Activity({ tableData, tableFilters, auth, empData, activityOptions, machineOptions }) {
+  const { flash } = usePage().props;
   const [alertVisible, setAlertVisible] = useState(true);
-
-  const [modalOpen, setModalOpen] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [updateDrawerVisible, setUpdateDrawerVisible] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
+
+
+
+
 
   const empId = empData?.emp_id || "";
   const empName = empData?.emp_name || "";
 
-  
+  const [form] = Form.useForm();
+  const [updateForm] = Form.useForm();
 
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    emp_id: empId,
-    emp_name: empName,
-    shift: "",
-    my_activity: "",
-    machine: "",
-    note: "",
-  });
-
-// auto update kapag machine nagbago
-useEffect(() => {
-  if (form.machine === "N/A" && form.status !== "Ongoing") {
-    setForm((prev) => ({ ...prev, status: "Ongoing" }));
-  } else if (form.machine && form.machine !== "N/A" && form.status !== "On-Going") {
-    setForm((prev) => ({ ...prev, status: "On-Going" }));
-  }
-}, [form.machine, form.status]);
-
-
-
-  // ✅ Auto compute shift on mount
+  // Set initialValues on mount
   useEffect(() => {
     const now = new Date();
     const totalMinutes = now.getHours() * 60 + now.getMinutes();
-    const shift =
-      totalMinutes >= 7 * 60 + 1 && totalMinutes <= 19 * 60
-        ? "A-Shift"
-        : "C-Shift";
-    setForm((prev) => ({ ...prev, shift }));
-  }, []);
+    const A_SHIFT_START = 7 * 60;   // 07:00
+    const A_SHIFT_END = 19 * 60;    // 19:00
 
-  // ✅ Auto-hide alerts after 3 seconds
+    const shift =
+    totalMinutes >= A_SHIFT_START && totalMinutes < A_SHIFT_END
+    ? "A-Shift"
+    : "C-Shift";
+
+    form.setFieldsValue({
+      emp_id: empId,
+      emp_name: empName,
+      shift,
+      status: "Ongoing" // default value
+    });
+  }, [empId, empName]);
+
+  // Auto-hide flash messages
   useEffect(() => {
     if (flash.success || flash.error) {
       setAlertVisible(true);
-      const timer = setTimeout(() => setAlertVisible(false), 1000);
+      const timer = setTimeout(() => setAlertVisible(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [flash]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  // Handle New Activity submit
+  const handleAddSubmit = (values) => {
+    // Auto set status based on machine
+    const status = values.machine === "N/A" ? "Ongoing" : "On-Going";
+
+    router.post("/techact/ongoing/add", {
+      ...values,
+      status
+    }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        toast.success("Activity logged successfully!");
+        form.resetFields();
+        setDrawerVisible(false);
+      },
+      onError: () => toast.error("Failed to log activity. Please try again."),
+    });
   };
 
-const handleSubmit = (e) => {
-  e.preventDefault();
+  const currentTime = new Date();
+const logTime = selectedActivity?.log_time ? new Date(selectedActivity.log_time) : null;
+const isDoneDisabled = !logTime || currentTime < logTime;
 
-  router.post("/techact/ongoing/add", form, {
-    preserveScroll: true,
-    onSuccess: () => {
-      setForm({
-        emp_id: auth.user?.id || "",
-        emp_name: auth.user?.name || "",
-        shift: "",
-        my_activity: "",
-        machine: "",
-        note: "",
-      });
-      setShowForm(false);
-    },
-  });
+
+  // Handle Update Activity submit
+
+// const handleUpdateSubmit = (values) => {
+//   if (!selectedActivity) return;
+
+//   const payload = {
+//     my_activity: selectedActivity.my_activity,
+//     machine: selectedActivity.machine,
+//     note: values.note || selectedActivity.note || "",
+//     status: selectedActivity.status,
+//     time_out: new Date().toLocaleString("en-US", {
+//       month: "short",
+//       day: "2-digit",
+//       year: "numeric",
+//       hour: "2-digit",
+//       minute: "2-digit",
+//       second: "2-digit",
+//     }),
+//   };
+
+//   router.put(`/techact/ongoing/update/${selectedActivity.id}`, payload, {
+//     onSuccess: () => {
+//       toast.success("Activity updated successfully!");
+//       setUpdateDrawerVisible(false);
+//       setSelectedActivity(null);
+//       window.location.reload();
+//     },
+//     onError: () => {
+//       toast.error("Failed to update activity. Please try again.");
+//     },
+//   });
+// };
+
+const handleUpdateSubmit = (values) => {
+  if (!selectedActivity) return;
+
+
+const formatTimeOut = (date) => {
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const m = months[date.getMonth()];
+  const d = String(date.getDate()).padStart(2, "0");
+  const y = date.getFullYear();
+  const h = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+  const s = String(date.getSeconds()).padStart(2, "0");
+
+  return `${m}/${d}/${y} ${h}:${min}:${s}`;
 };
 
-  const filteredData = tableData?.data || [];
+// Usage:
+const payload = {
+  my_activity: selectedActivity.my_activity,
+  machine: selectedActivity.machine,
+  note: values.note || selectedActivity.note || "",
+  status: selectedActivity.status,
+  time_out: formatTimeOut(new Date()),
+};
+  
 
-  // ✅ Check if current user has ongoing activity
+
+router.put(`/techact/ongoing/update/${selectedActivity.id}`, payload, {
+  onSuccess: () => {
+    toast.success("Activity updated successfully!");
+    setUpdateDrawerVisible(false);
+    setSelectedActivity(null);
+  },
+  onError: (errors) => {
+    // errors object ay galing sa Inertia validation
+    if (errors.time_out) {
+      toast.error(errors.time_out);
+    } else if (errors.error) {
+      toast.error(errors.error);
+    } else {
+      toast.error("Failed to update activity. Please try again.");
+    }
+    console.error(errors);
+  },
+});
+};
+
+
+  const filteredData = tableData?.data || [];
   const hasOngoing = filteredData.some(
     (row) =>
       row.emp_id === empId &&
-      (row.status?.toLowerCase() === "ongoing" ||
-        row.status?.toLowerCase() === "on-going" )
-        // row.status?.toLowerCase() === "for engineer approval")
+      ["ongoing", "on-going"].includes(row.status?.toLowerCase())
   );
 
-  const dataWithBadgesAndDuration = filteredData.map((row, index) => {
-    const enhancedRow = {
-      ...row,
-      i: index + 1,
-      duration: calculateDuration(row),
-      shift: getShiftBadge(row),
-      shiftText: row.shift || "", // plain text for modal
-      status: getStatusBadge(row.status),
-      statusText: row.status || "Unknown", // plain text for modal
-    };
+  const getShiftBadge = (row) => {
+    let shift = row.shift || "";
+    let badgeClass = "badge bg-secondary";
+    if (!shift) {
+      const logDate = new Date(row.log_time);
+      if (!isNaN(logDate)) {
+        const hours = logDate.getHours();
+        const totalMinutes = hours * 60 + logDate.getMinutes();
+        if (totalMinutes >= 7 * 60 + 1 && totalMinutes <= 19 * 60) {
+          shift = "A-Shift";
+          badgeClass = "badge bg-primary text-white";
+        } else {
+          shift = "C-Shift";
+          badgeClass = "badge bg-warning text-white";
+        }
+      } else {
+        shift = "Unknown";
+        badgeClass = "badge bg-secondary text-white";
+      }
+    } else {
+      if (shift === "A-Shift") badgeClass = "badge bg-primary text-white";
+      else if (shift === "C-Shift") badgeClass = "badge bg-warning text-white";
+    }
+    return <span className={badgeClass}>{shift}</span>;
+  };
 
-    return {
-      ...enhancedRow,
-      viewDetails:
-      enhancedRow.statusText === "For Engineer Approval" ? null : (
-        <button
-          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-          onClick={() => {
-            setSelectedActivity(enhancedRow); // ✅ now passing enhanced row
-            setModalOpen(true);
-          }}
-        >
-          <div className="flex items-center">
-            <i className="fa-regular fa-eye mr-1"></i>
-            View
-          </div>
-        </button>
-      ),
-    };
-  });
+  const getStatusBadge = (status) => {
+    if (!status) return <span className="badge bg-secondary text-white">Unknown</span>;
+    const lower = status.toLowerCase();
+    if (lower.startsWith("ongoing") || lower === "on-going")
+      return <span className="badge bg-info text-white">{status}</span>;
+    if (lower === "complete")
+      return <span className="badge bg-success text-white">{status}</span>;
+    if (lower.startsWith("for engineer approval"))
+      return <span className="badge bg-primary text-white">{status}</span>;
+    return <span className="badge bg-secondary text-white">{status}</span>;
+  };
+
+  const calculateDuration = (row) => {
+    const start = row.log_time ? new Date(row.log_time) : null;
+    const end = row.time_out ? new Date(row.time_out) : new Date();
+    if (!start || isNaN(start) || !end || isNaN(end)) return "-";
+    const diffMs = end - start;
+    if (diffMs < 0) return "-";
+    const diffMinutes = Math.floor(diffMs / 60000);
+    if (diffMinutes > 0) return `${diffMinutes} min`;
+    return `${Math.floor(diffMs / 1000)} secs`;
+  };
 
   return (
     <AuthenticatedLayout>
       <Head title="My Ongoing Activities" />
       <div className="p-6">
-        {/* ✅ Alert Toast */}
-        {alertVisible && flash.success && (
-          <div className="mb-4 p-3 rounded bg-green-500 text-white shadow">
-            <div className="flex items-center">
-              <i className="fa-solid fa-circle-check mr-1"></i>
-            {flash.success}
-            </div>
-          </div>
-        )}
-        {alertVisible && flash.error && (
-          <div className="mb-4 p-3 rounded bg-red-500 text-white shadow">
-            <div className="flex items-center">
-              <i className="fa-solid fa-shield-virus mr-1"></i>
-          {flash.error}
-          </div>
-          </div>
-        )}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold mb-4">My Ongoing Activities</h1>
 
-        {/* ✅ Toggle Insert Form */}
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className={`px-4 py-2 rounded mb-4 ${
-            hasOngoing
-              ? "bg-yellow-400 text-red-500 cursor-not-allowed"
-              : "bg-green-600 text-white"
-          }`}
-          disabled={hasOngoing}
-        >
-          {hasOngoing
-            ? "🚫 You have an ongoing activity !!"
-            : "+ Log New Activity"}
-        </button>
+        <div className="flex flex-col items-center w-full">
+         {/* Flash Messages */}
+{alertVisible && flash.success && (
+  <div className="mb-4 p-3 w-2/5 rounded-md bg-green-50 text-green-600 shadow flex items-center space-x-2 justify-center border-2 border-green-500">
+    {/* Icon */}
+    <span className="border border-green-400 rounded-full text-center bg-green-100">✅</span>
+    <span>{flash.success}</span>
+  </div>
+)}
 
-      </div>
+{alertVisible && flash.error && (
+  <div className="mb-4 p-3 w-2/5 rounded-md bg-red-50 text-red-600 shadow flex items-center space-x-2 justify-center border-2 border-red-500">
+    {/* Icon */}
+    <span className="border border-red-400 rounded-full text-center bg-red-100">⚠️</span>
+    <span>{flash.error}</span>
+  </div>
+)}
+</div>
 
-        {showForm && (
-          <form
-            onSubmit={handleSubmit}
-            className="mb-6 grid gap-2 border p-4 rounded"
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold text-blue-500"><FileTextTwoTone /> My Ongoing Activities</h1>
+          <Button
+            type="primary"
+            size="large"
+            disabled={hasOngoing}
+            onClick={() => setDrawerVisible(true)}
+            icon={<PlusOutlined />}
           >
-            <input
-              type="text"
-              name="status"
-              value={form.status}
-              hidden
-            />
+            {hasOngoing ? "🚫 You have an ongoing activity" : "Log New Activity"}
+          </Button>
+        </div>
 
-            <input
-              name="emp_id"
-              value={form.emp_id}
-              onChange={handleChange}
-              placeholder="Employee ID"
-              className="border p-2 text-gray-700 bg-gray-200"
-              readOnly
-            />
-            <input
-              name="emp_name"
-              value={form.emp_name}
-              onChange={handleChange}
-              placeholder="Employee Name"
-              className="border p-2 text-gray-700 bg-gray-200"
-              readOnly
-            />
-            {/* ✅ Auto selected shift */}
-            <select
-              name="shift"
-              value={form.shift}
-              onChange={handleChange}
-              className="border p-2 text-gray-700"
-              required
-            >
-              <option disabled value="">
-                Select Shift
-              </option>
-              <option value="A-Shift">A-Shift</option>
-              <option value="C-Shift">C-Shift</option>
-            </select>
-
-            <select
-              name="my_activity"
-              value={form.my_activity}
-              onChange={handleChange}
-              className="border p-2 text-gray-700"
-              required
-            >
-              <option disabled value="">
-                Select Activity
-              </option>
-              {activityOptions.map((activity, idx) => (
-                <option key={idx} value={activity}>
-                  {activity}
-                </option>
-              ))}
-            </select>
-
-            <select
-              name="machine"
-              value={form.machine}
-              onChange={handleChange}
-              className="border p-2 text-gray-700"
-              required
-            >
-              <option disabled value="">
-                Select Machine
-              </option>
-              <option value="N/A">N/A</option>
-              {machineOptions.map((machine_num, idx) => (
-                <option key={idx} value={machine_num}>
-                  {machine_num}
-                </option>
-              ))}
-            </select>
-
-            <input
-              name="log_time"
-              value={(() => {
-                const now = new Date();
-                const monthNames = [
-                  "Jan",
-                  "Feb",
-                  "Mar",
-                  "Apr",
-                  "May",
-                  "Jun",
-                  "Jul",
-                  "Aug",
-                  "Sep",
-                  "Oct",
-                  "Nov",
-                  "Dec",
-                ];
-                return `${monthNames[now.getMonth()]}/${String(
-                  now.getDate()
-                ).padStart(2, "0")}/${now.getFullYear()} ${String(
-                  now.getHours()
-                ).padStart(2, "0")}:${String(now.getMinutes()).padStart(
-                  2,
-                  "0"
-                )}:${String(now.getSeconds()).padStart(2, "0")}`;
-              })()}
-              onChange={handleChange}
-              placeholder="Log Time"
-               className="border p-2 text-gray-700 bg-gray-200"
-              readOnly
-            />
-
-            <textarea
-              name="note"
-              value={form.note}
-              onChange={handleChange}
-              placeholder="Note"
-              className="border py-10 text-gray-700"
-            />
-            <button
-              type="submit"
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded flex items-center justify-center"
-            >
-              <i className="fa-regular fa-bookmark mr-1"></i>
-              Save
-            </button>
-          </form>
-        )}
-
+        {/* Data Table */}
         <DataTable
           columns={[
             { key: "emp_name", label: "Technician" },
@@ -376,13 +273,33 @@ const handleSubmit = (e) => {
             { key: "my_activity", label: "Activity" },
             { key: "machine", label: "Machine" },
             { key: "log_time", label: "Date Log" },
-            // { key: "time_out", label: "Done Date" },
             { key: "duration", label: "Time Duration" },
             { key: "status", label: "Status" },
             { key: "note", label: "Comment" },
             { key: "viewDetails", label: "Action" },
           ]}
-          data={dataWithBadgesAndDuration}
+          data={filteredData.map((row, idx) => ({
+            ...row,
+            i: idx + 1,
+            shift: getShiftBadge(row),
+            status: getStatusBadge(row.status),
+            duration: calculateDuration(row),
+            viewDetails: (
+              <Button
+                type="primary"
+                shape="round-full"
+                icon={<EyeOutlined />}
+                disabled={row.status === "For Engineer Approval"}
+                onClick={() => {
+                  setSelectedActivity(row);
+                  updateForm.setFieldsValue({ note: row.note });
+                  setUpdateDrawerVisible(true);
+                }}
+              >
+                View
+              </Button>
+            ),
+          }))}
           meta={{
             from: tableData?.from,
             to: tableData?.to,
@@ -398,134 +315,151 @@ const handleSubmit = (e) => {
           sortOrder="desc"
         />
 
-         {/* Modal */}
-{modalOpen && selectedActivity && (
-  <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-    <div className="bg-gray-800 p-6 rounded shadow-lg w-1/3">
-      <h2 className="text-xl font-bold mb-4 text-gray-200">
-        <div className="flex items-center bg-gray-500 p-2 rounded text-white">
-          <i className="fa-solid fa-circle-info text-4xl mr-1"></i>
-          My Activity
-        </div>
-      </h2>
+        {/* Drawer: New Activity */}
+        <Drawer
+          title={<Space className="text-xl font-bold text-emerald-600"><AppstoreOutlined /> New Activity</Space>}
+          open={drawerVisible}
+          onClose={() => setDrawerVisible(false)}
+          size="large"
+          styles={{ body: { padding: '20px 24px', background: '#f5f5f5', width: '100%' } }}
+          footer={
+            <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button type="primary" style={{ backgroundColor: "#f5222d", borderColor: "#f5222d" }} onClick={() => setDrawerVisible(false)} icon={<CloseCircleOutlined />}>Cancel</Button>
+              <Button type="primary" style={{ backgroundColor: "#52c41a", borderColor: "#389e0d"}} onClick={() => form.submit()} icon={<CheckCircleOutlined />}>Save</Button>
+            </Space>
+          }
+        >
+          <Card variant="outlined" style={{ background: '#ffffff' }}>
+            <Form
+              layout="vertical"
+              form={form}
+              onFinish={handleAddSubmit}
+            >
+              <Form.Item name="emp_id" label={<Space><IdcardOutlined /> Employee ID</Space>}>
+                <Input className="rounded-md bg-gray-100" readOnly />
+              </Form.Item>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
+              <Form.Item name="emp_name" label={<Space><UserOutlined /> Employee Name</Space>}>
+                <Input className="rounded-md bg-gray-100" readOnly />
+              </Form.Item>
 
-          router.put(`/techact/ongoing/update/${selectedActivity.id}`, {
-            time_out: new Date().toLocaleString("en-US", {
-              month: "short",
-              day: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            }),
-            my_activity: selectedActivity.my_activity,
-            machine: selectedActivity.machine,
-            note: selectedActivity.note,
-            status: selectedActivity.statusText,
-          }, {
-            onSuccess: () => {
-              toast.success("Activity updated successfully!");
-              setModalOpen(false);
-              setSelectedActivity(null);
-              window.location.reload(); // refresh table
-            },
-            onError: () => {
-              toast.error("Failed to update activity. Please try again.");
-            }
-          });
-        }}
-      >
-        <div className="mb-4">
-          <label className="block text-white mb-1">Done Time</label>
-          <input
-            name="time_out"
-            value={new Date().toLocaleString()}
-            className="border p-2 text-blue-300 bg-gray-600 w-full mb-2"
-            readOnly
-          />
+              <Form.Item name="shift" label={<Space><ClockCircleOutlined /> Shift</Space>}>
+                <Input className="rounded-md bg-gray-100" readOnly />
+              </Form.Item>
 
-          <label className="block text-white mb-1">Activity</label>
-          <input
-            type="text"
-            value={selectedActivity.my_activity}
-            className="border p-2 text-blue-300 bg-gray-600 w-full mb-2"
-            readOnly
-          />
-        </div>
+              <Form.Item name="my_activity" label={<Space><ToolOutlined /> Activity</Space>} rules={[{ required: true }]}>
+                <Select
+                  showSearch
+                  placeholder="Select Activity"
+                  optionFilterProp="children"
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().includes(input.toLowerCase())
+                  }
+                  className="p-2 rounded-md border border-gray-500"
+                >
+                  {activityOptions.map((activity, idx) => (
+                    <Select.Option key={idx} value={activity}>{activity}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
 
-        <div className="mb-4">
-          <label className="block text-white mb-1">Machine</label>
-          <input
-            type="text"
-            value={selectedActivity.machine}
-            className="border p-2 text-blue-300 bg-gray-600 w-full mb-2"
-            readOnly
-          />
-        </div>
+              <Form.Item name="machine" label={<Space><AppstoreOutlined /> Machine</Space>} rules={[{ required: true }]}>
+                <Select
+                  showSearch
+                  placeholder="Select Machine"
+                  optionFilterProp="children"
+                  onChange={(value) => {
+                    // update hidden status field dynamically
+                    form.setFieldsValue({ status: value === "N/A" ? "Ongoing" : "On-Going" });
+                  }}
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().includes(input.toLowerCase())
+                  }
+                  className="p-2 rounded-md border border-gray-500"
+                >
+                  <Select.Option value="N/A">N/A</Select.Option>
+                  {machineOptions.map((m, idx) => (
+                    <Select.Option key={idx} value={m}>{m}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
 
-        <div className="mb-4">
-          <label className="block text-white mb-1">Note</label>
-          <textarea
-            value={selectedActivity.note || ""}
-            onChange={(e) =>
-              setSelectedActivity({
-                ...selectedActivity,
-                note: e.target.value,
-              })
-            }
-            className="w-full p-3 rounded border text-gray-800"
-          />
-        </div>
+              <Form.Item name="note" label={<Space><FileTextOutlined /> Note</Space>}>
+                <Input.TextArea rows={4} placeholder="Optional notes..." className="border border-gray-500"/>
+              </Form.Item>
 
-        {/* ✅ Only show Approval Remarks if not empty */}
-        {selectedActivity.remarks && selectedActivity.remarks.trim() !== "" && (
-          <div className="mb-4">
-            <label className="block text-white mb-1">Approval Remarks</label>
-            <textarea
-              value={selectedActivity.remarks}
-              readOnly
-              className="w-full p-3 rounded border text-gray-800 bg-gray-300 cursor-not-allowed"
-            />
-          </div>
-        )}
+              {/* Hidden status field */}
+              <Form.Item name="status" hidden>
+                <Input />
+              </Form.Item>
+            </Form>
+          </Card>
+        </Drawer>
 
-        <div className="flex justify-between">
- <button
-            type="button"
-            onClick={() => {
-              setModalOpen(false);
-              setSelectedActivity(null);
-            }}
-            className="px-4 py-2 bg-red-600 text-white rounded"
-          >
-            <div className="flex items-center">
-              <i className="fa-regular fa-rectangle-xmark text-2xl mr-1"></i>
-              Close
-            </div>
-          </button>
+        {/* Drawer: Update Activity */}
+        <Drawer
+          title={<Space className="text-xl font-bold text-indigo-600"><InfoCircleOutlined /> My Activity</Space>}
+          open={updateDrawerVisible}
+          onClose={() => {
+            setUpdateDrawerVisible(false);
+            setSelectedActivity(null);
+          }}
+          size="large"
+          styles={{ body: { padding: '20px 24px', background: '#f5f5f5' } }}
+          footer={
+            <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button type="primary" style={{ backgroundColor: "#f5222d", borderColor: "#f5222d" }} onClick={() => setUpdateDrawerVisible(false)} icon={<CloseCircleOutlined />}>Close</Button>
+              <Button 
+              type="primary"
+              style={{ backgroundColor: "#52c41a", borderColor: "#389e0d" }} 
+              onClick={() => updateForm.submit()} 
+              icon={<CheckCircleOutlined />}
+              disabled={isDoneDisabled}
+              title={isDoneDisabled ? "Cannot mark as Done. Please check and correct your device’s date & time." : ""}
+              >Done</Button>
 
-          <button
-            type="submit"
-            className="px-4 py-2 bg-green-600 text-white rounded"
-          >
-            <div className="flex items-center">
-              <i className="fa-regular fa-square-check text-2xl mr-1"></i>
-              Done
-            </div>
-          </button>
+            </Space>
+          }
+        >
+          <Card variant="outlined" style={{ background: '#ffffff' }}>
+            <Form layout="vertical" form={updateForm} onFinish={handleUpdateSubmit}>
 
-         
-        </div>
-      </form>
-    </div>
+{["on-going"].includes(
+  selectedActivity?.status?.toLowerCase()
+) && (
+  <div className="flex items-start gap-2 mb-3 p-3 rounded-md bg-orange-50 border border-orange-300">
+    <ExclamationCircleOutlined className="text-orange-600 text-lg mt-0.5" />
+    <p className="text-sm text-orange-700">
+      Please ensure that your Supervisor approves this activity for it to be reflected in your ranking.
+    </p>
   </div>
 )}
 
 
+  <Form.Item label={<Space><ToolOutlined /> Activity</Space>}>
+    <Input
+      value={selectedActivity?.my_activity || ""}
+      readOnly
+      className="border border-gray-500 rounded-md bg-gray-100"
+    />
+  </Form.Item>
+
+  <Form.Item label={<Space><AppstoreOutlined /> Machine</Space>}>
+    <Input
+      value={selectedActivity?.machine || ""}
+      readOnly
+      className="border border-gray-500 rounded-md bg-gray-100"
+    />
+  </Form.Item>
+
+  <Form.Item name="note" label={<Space><FileTextOutlined /> Note</Space>}>
+    <Input.TextArea rows={4} className="border border-gray-500" />
+  </Form.Item>
+
+</Form>
+
+          </Card>
+        </Drawer>
 
       </div>
     </AuthenticatedLayout>

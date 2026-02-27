@@ -161,7 +161,7 @@ export default function Activity({ tableData, tableFilters }) {
             { key: "my_activity", label: "Activity" },
             { key: "machine", label: "Machine" },
             { key: "log_time", label: "Date Log" },
-            { key: "time_out", label: "Done Date" },
+            { key: "time_out", label: "Completion Time" },
             { key: "duration", label: "Time Duration" },
             { key: "status", label: "Status" },
             { key: "note", label: "Comment" },
@@ -195,14 +195,15 @@ export default function Activity({ tableData, tableFilters }) {
       </div>
 
       {/* Details List (left aligned) */}
-      <div className="space-y-3 text-sm text-gray-200">
+      <div className="space-y-3 text-sm text-gray-200 max-h-[60vh] overflow-y-auto pr-2">
   {[
     ["Technician", selectedActivity.emp_name],
     ["Shift", selectedActivity.shift],
     ["Activity", selectedActivity.my_activity],
     ["Machine", selectedActivity.machine],
     ["Log Time", selectedActivity.log_time],
-    ["Time Out", selectedActivity.time_out || "-"],
+    ["Completion Time", selectedActivity.time_out || "-"],
+    ["Activity Duration", calculateDuration(selectedActivity)],
     ["Status", selectedActivity.status],
     ["Note", selectedActivity.note || "-"],
     // Conditional Approver

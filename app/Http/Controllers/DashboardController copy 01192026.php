@@ -57,77 +57,13 @@ class DashboardController extends Controller
 
         // 🔹 Total counts admin
         $totalActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')->count();
+        $completedActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')->where('status', 'complete')->count();
+        $ongoingActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')->whereIn('status', ['ongoing', 'on-going'])->count();
 
-
-
-        $now = now(); // current datetime
-
-        if ($now->between(
-            $now->copy()->setTime(7, 0),
-            $now->copy()->setTime(18, 59)
-        )) {
-            $shift = 'A';
-        } else {
-            $shift = 'C';
-        }
-
-        if ($shift === 'A') {
-            // Same day
-            $shiftStart = $now->copy()->setTime(7, 0);
-            $shiftEnd   = $now->copy()->setTime(18, 59);
-        } else {
-            // C-Shift (overnight)
-            if ($now->hour < 7) {
-                // madaling araw → kahapon 7PM to ngayon 6:59AM
-                $shiftStart = $now->copy()->subDay()->setTime(19, 0);
-                $shiftEnd   = $now->copy()->setTime(6, 59);
-            } else {
-                // gabi → ngayon 7PM to bukas 6:59AM
-                $shiftStart = $now->copy()->setTime(19, 0);
-                $shiftEnd   = $now->copy()->addDay()->setTime(6, 59);
-            }
-        }
-
-
-        $ongoingActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')
-            ->whereRaw(
-                "STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?",
-                [$shiftStart, $shiftEnd]
-            )
-            ->whereIn('status', ['ongoing', 'on-going'])
+        // 🔹 Today's total counts
+        $totalActivitiesTodayAdmin = DB::connection('eeportal')->table('my_activity_list')
+            ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
             ->count();
-
-        $completedActivitiesAdmin = DB::connection('eeportal')
-            ->table('my_activity_list')
-            ->whereRaw(
-                "STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?",
-                [$shiftStart, $shiftEnd]
-            )
-            ->where('status', 'complete')
-            ->count();
-
-        $totalActivitiesTodayAdmin = DB::connection('eeportal')
-            ->table('my_activity_list')
-            ->whereRaw(
-                "STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?",
-                [$shiftStart, $shiftEnd]
-            )
-            ->count();
-
-
-
-
-
-        // // $completedActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')->where('status', 'complete')->count();
-        // $completedActivitiesAdmin = DB::connection('eeportal')->table('my_activity_list')
-        //     ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
-        //     ->where('status', 'complete')
-        //     ->count();
-
-        // // 🔹 Today's total counts
-        // $totalActivitiesTodayAdmin = DB::connection('eeportal')->table('my_activity_list')
-        //     ->whereRaw("STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?", [$dayStart, $dayEnd])
-        //     ->count();
 
         $totalApprovalAdmin = DB::connection('eeportal')->table('my_activity_list')
             ->where('status', 'For Engineer Approval')
@@ -153,57 +89,45 @@ class DashboardController extends Controller
             'for engineer approval'  => '#422ad5', // mas light na blue
         ];
 
-
-
-
-        $now = now();
-        $currentTime = $now->format('H:i:s');
+        $now = now(); // current datetime
         $today = $now->format('Y-m-d');
         $yesterday = $now->copy()->subDay()->format('Y-m-d');
 
-        // Determine current shift
-        $currentShift = ($currentTime >= '07:00:00' && $currentTime <= '18:59:59') ? 'A-Shift' : 'C-Shift';
+        $currentTime = $now->format('H:i:s');
 
-        // Build query
-        $activeTechniciansQuery = DB::connection('eeportal')
+        if ($currentTime >= '07:00:00' && $currentTime <= '18:59:59') {
+            $currentShift = 'A-Shift';
+            // Shift start/end for query
+            $shiftStart = "$today 07:00:00";
+            $shiftEnd   = "$today 18:59:59";
+        } else {
+            $currentShift = 'C-Shift';
+            if ($currentTime >= '19:00:00') {
+                // evening part of C-Shift (today)
+                $shiftStart = "$today 19:00:00";
+                $shiftEnd   = "$today 23:59:59";
+            } else {
+                // early morning part of C-Shift (after midnight)
+                $shiftStart = "$yesterday 19:00:00";
+                $shiftEnd   = "$today 06:59:59";
+            }
+        }
+
+
+        $activeTechnicians = DB::connection('eeportal')
             ->table('my_activity_list')
-            ->where(function ($q) use ($currentShift, $currentTime, $today, $yesterday) {
-
-                // A-Shift
-                $q->when($currentShift === 'A-Shift', function ($a) use ($today) {
-                    $a->where('shift', 'A-Shift')
-                        ->whereRaw("DATE(STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')) = CURDATE()")
-                        ->whereRaw("TIME(STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')) BETWEEN '07:00:00' AND '18:59:59'");
-                });
-
-                // C-Shift
-                $q->when($currentShift === 'C-Shift', function ($c) use ($today, $yesterday, $currentTime) {
-                    $c->where('shift', 'C-Shift')
-                        ->where(function ($t) use ($today, $yesterday, $currentTime) {
-
-                            // Evening part (today)
-                            $t->when($currentTime >= '19:00:00', function ($evening) use ($today) {
-                                $evening->whereRaw("DATE(STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')) = ?", [$today])
-                                    ->whereRaw("TIME(STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')) >= '19:00:00'");
-                            });
-
-                            // Morning part (yesterday → today)
-                            $t->when($currentTime <= '06:59:59', function ($morning) use ($yesterday) {
-                                $morning->whereRaw("DATE(STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')) = ?", [$yesterday])
-                                    ->whereRaw("TIME(STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s')) <= '06:59:59'");
-                            });
-                        });
-                });
-            });
-
-        // Get unique technicians
-        $activeTechnicians = $activeTechniciansQuery
+            ->where('shift', $currentShift)
+            ->whereRaw(
+                "STR_TO_DATE(log_time, '%b/%d/%Y %H:%i:%s') BETWEEN ? AND ?",
+                [$shiftStart, $shiftEnd]
+            )
             ->pluck('emp_name')
             ->unique()
-            ->values();
+            ->values()
+            ->toArray();
 
-        // Count for summary
-        $activeTechniciansCount = $activeTechnicians->count();
+        $count = count($activeTechnicians);
+        echo "Current shift: $currentShift, Active technicians: $count";
 
 
 
@@ -332,22 +256,6 @@ class DashboardController extends Controller
                 return $row;
             });
 
-        $activityPerDay = DB::connection('eeportal')
-            ->table('my_activity_list')
-            ->selectRaw("
-        CASE 
-            WHEN shift = 'C-Shift' AND TIME(date_created) BETWEEN '00:00:00' AND '06:59:59'
-                THEN DATE_SUB(DATE(date_created), INTERVAL 1 DAY)
-            ELSE DATE(date_created)
-        END as shift_date,
-
-        SUM(CASE WHEN shift = 'A-Shift' THEN 1 ELSE 0 END) as A_Shift,
-        SUM(CASE WHEN shift = 'C-Shift' THEN 1 ELSE 0 END) as C_Shift
-    ")
-            ->groupBy('shift_date')
-            ->orderBy('shift_date')
-            ->get();
-
         $userRank = $ranking->firstWhere('emp_name', $empName);
 
         return Inertia::render('Dashboard', [
@@ -367,11 +275,6 @@ class DashboardController extends Controller
             'ranked' => $ranking,
             'userRank' => $userRank,
             'selectedDate' => $date->format('Y-m-d'),
-            'currentShift' => $currentShift,
-            'activeTechnicians' => $activeTechnicians->toArray(), // array ng names
-            // bilang po ito ng active na technian per shift okay gets?
-            'activityPerDay' => $activityPerDay,
-
         ]);
     }
 }

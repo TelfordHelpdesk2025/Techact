@@ -135,4 +135,13 @@ class TechActivityController extends Controller
 
         return back()->with('success', 'Status updated!');
     }
+
+    public function permanentDelete($id)
+    {
+        DB::connection('eeportal')->table('my_activity_list')
+            ->where('id', $id)
+            ->delete();
+
+        return back()->with('success', 'Activity removed successfully.');
+    }
 }
